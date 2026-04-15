@@ -67,26 +67,26 @@
   <section id="what-is-mcp" class="section alt">
    <div class="container">
     <h2>What Is MCP?</h2>
-    <p class="section-desc">The Model Context Protocol is an open standard — now governed by the Linux Foundation — that gives AI models a single, universal way to connect to any tool. But to understand why that matters, forget about AI for a second. Think about ordering food.</p>
+    <p class="section-desc">The Model Context Protocol is an open standard — now governed by the Linux Foundation — that gives AI models a single, universal way to connect to any tool. Think of it as USB-C for AI: one standard replaces a drawer full of proprietary cables.</p>
 
     <div class="chart-card wide">
-      <h3>The Integration Problem — As a Food Order</h3>
-      <p class="chart-desc">Before delivery apps, getting dinner meant calling each restaurant separately. Different menus, different phone numbers, different payment methods. Now toggle to see what one universal layer changes.</p>
+      <h3>The Integration Problem — As a Cable Drawer</h3>
+      <p class="chart-desc">Remember when every device needed its own charger? Toggle to see what one universal standard changes.</p>
       <div class="diagram-wrapper">
         <canvas id="mcpDiagram"></canvas>
       </div>
       <div class="diagram-controls">
-        <button class="diagram-btn active-red" data-view="before">Before: Call Every Restaurant</button>
-        <button class="diagram-btn" data-view="after">After: One App Connects All</button>
+        <button class="diagram-btn active-red" data-view="before">Before USB-C: Cable Chaos</button>
+        <button class="diagram-btn" data-view="after">After USB-C: One Standard</button>
       </div>
       <div class="diagram-legend">
-        <span><span class="legend-dot" style="background:var(--cyan)"></span> Hungry People</span>
-        <span><span class="legend-dot" style="background:var(--purple)"></span> Restaurants</span>
-        <span><span class="legend-dot" style="background:var(--green)"></span> Delivery App</span>
+        <span><span class="legend-dot" style="background:var(--cyan)"></span> Your Devices</span>
+        <span><span class="legend-dot" style="background:var(--purple)"></span> Old Cables</span>
+        <span><span class="legend-dot" style="background:var(--green)"></span> USB-C</span>
       </div>
     </div>
 
-    <p class="section-prose">That's exactly what MCP does for AI. Right now, every AI model (Claude, GPT, Gemini) needs its own custom integration to every tool it works with — your SIEM, your ticketing system, your network monitor, your Slack. If you have 3 AI models and 6 tools, that's 18 custom integrations to build and maintain. MCP collapses that to 9: each AI connects to MCP once, each tool connects to MCP once, and everything just works. One protocol, universal access — the same leap that delivery apps made for restaurants.</p>
+    <p class="section-prose">Now replace "devices" with AI models (Claude, GPT, Gemini) and "cables" with enterprise tools (your SIEM, ticketing system, network monitor, Slack). Without MCP, every AI model needs its own custom integration to every tool — 3 models times 6 tools equals 18 bespoke connectors to build and maintain. MCP collapses that to 9: each AI connects to MCP once, each tool connects to MCP once, and everything just works. One protocol, universal access — the same leap USB-C made for charging.</p>
    </div>
   </section>
 
@@ -235,46 +235,74 @@
 
     <div class="chart-card wide">
       <h3>MCP Adoption Timeline</h3>
-      <div class="timeline">
-        <div class="timeline-item">
-          <div class="ti-date">Sep 2024</div>
-          <div class="ti-title">SDKs Created</div>
-          <div class="ti-body">Python &amp; TypeScript SDK repos created on GitHub</div>
-        </div>
-        <div class="timeline-item">
-          <div class="ti-date">Nov 2024</div>
-          <div class="ti-title">Public Launch</div>
-          <div class="ti-body">Anthropic publicly launches MCP as open standard</div>
-        </div>
-        <div class="timeline-item">
-          <div class="ti-date">Feb 2025</div>
-          <div class="ti-title">5M Downloads/mo</div>
-          <div class="ti-body">Monthly SDK downloads cross 5 million; 1,000+ community servers</div>
-        </div>
-        <div class="timeline-item">
-          <div class="ti-date">Mar 2025</div>
-          <div class="ti-title">OpenAI Adopts</div>
-          <div class="ti-body">Sam Altman: &ldquo;People love MCP &mdash; excited to add support across products&rdquo;</div>
-        </div>
-        <div class="timeline-item">
-          <div class="ti-date">Apr 2025</div>
-          <div class="ti-title">Google Adopts</div>
-          <div class="ti-body">Demis Hassabis confirms MCP support for Gemini models</div>
-        </div>
-        <div class="timeline-item">
-          <div class="ti-date">May 2025</div>
-          <div class="ti-title">Microsoft Integrates</div>
-          <div class="ti-body">MCP integrated into Windows 11, Azure AI Agent Service at Build 2025</div>
-        </div>
-        <div class="timeline-item">
-          <div class="ti-date">Nov 2025</div>
-          <div class="ti-title">AWS + Spec Update</div>
-          <div class="ti-body">AWS publishes MCP servers; major spec update</div>
-        </div>
-        <div class="timeline-item">
-          <div class="ti-date">Dec 2025</div>
-          <div class="ti-title">Linux Foundation</div>
-          <div class="ti-body">MCP donated to Agentic AI Foundation (AAIF) under Linux Foundation</div>
+      <p class="chart-desc">From side project to industry standard in 16 months</p>
+      <div class="h-timeline">
+        <div class="h-timeline-track"></div>
+        <div class="h-timeline-items">
+          <div class="h-tl-item">
+            <div class="h-tl-dot"></div>
+            <div class="h-tl-card">
+              <div class="h-tl-date">Sep 2024</div>
+              <div class="h-tl-title">SDKs Created</div>
+              <div class="h-tl-body">Python &amp; TypeScript repos on GitHub</div>
+            </div>
+          </div>
+          <div class="h-tl-item">
+            <div class="h-tl-dot"></div>
+            <div class="h-tl-card">
+              <div class="h-tl-date">Nov 2024</div>
+              <div class="h-tl-title">Public Launch</div>
+              <div class="h-tl-body">Anthropic launches MCP as open standard</div>
+            </div>
+          </div>
+          <div class="h-tl-item">
+            <div class="h-tl-dot"></div>
+            <div class="h-tl-card">
+              <div class="h-tl-date">Feb 2025</div>
+              <div class="h-tl-title">5M Downloads</div>
+              <div class="h-tl-body">1,000+ community servers built</div>
+            </div>
+          </div>
+          <div class="h-tl-item">
+            <div class="h-tl-dot"></div>
+            <div class="h-tl-card">
+              <div class="h-tl-date">Mar 2025</div>
+              <div class="h-tl-title">OpenAI Adopts</div>
+              <div class="h-tl-body">&ldquo;People love MCP&rdquo; &mdash; Sam Altman</div>
+            </div>
+          </div>
+          <div class="h-tl-item">
+            <div class="h-tl-dot"></div>
+            <div class="h-tl-card">
+              <div class="h-tl-date">Apr 2025</div>
+              <div class="h-tl-title">Google Adopts</div>
+              <div class="h-tl-body">Gemini models get MCP support</div>
+            </div>
+          </div>
+          <div class="h-tl-item">
+            <div class="h-tl-dot"></div>
+            <div class="h-tl-card">
+              <div class="h-tl-date">May 2025</div>
+              <div class="h-tl-title">Microsoft</div>
+              <div class="h-tl-body">Windows 11 + Azure integration</div>
+            </div>
+          </div>
+          <div class="h-tl-item">
+            <div class="h-tl-dot"></div>
+            <div class="h-tl-card">
+              <div class="h-tl-date">Nov 2025</div>
+              <div class="h-tl-title">AWS Joins</div>
+              <div class="h-tl-body">Open-source MCP servers published</div>
+            </div>
+          </div>
+          <div class="h-tl-item">
+            <div class="h-tl-dot"></div>
+            <div class="h-tl-card">
+              <div class="h-tl-date">Dec 2025</div>
+              <div class="h-tl-title">Linux Foundation</div>
+              <div class="h-tl-body">MCP donated to AAIF governance</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

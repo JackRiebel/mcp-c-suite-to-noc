@@ -184,31 +184,30 @@
   // ── 10. Interactive MCP Diagram (Canvas) ──────────────────────────────────
   var canvas = $('#mcpDiagram');
   var ctx = canvas.getContext('2d');
-  var diagramState = 'before';
   var animProgress = 0;
   var animTarget = 0;
-  var animating = false;
   var hoveredNode = null;
   var dpr = window.devicePixelRatio || 1;
+  var frameCount = 0;
 
-  var aiModels = [
-    { label: 'You' },
-    { label: 'Friend' },
-    { label: 'Family' },
+  var devices = [
+    { label: 'Phone' },
+    { label: 'Laptop' },
+    { label: 'Tablet' },
   ];
-  var tools = [
-    { label: 'Pizza' },
-    { label: 'Sushi' },
-    { label: 'Tacos' },
-    { label: 'Burgers' },
-    { label: 'Thai' },
-    { label: 'Chinese' },
+  var cables = [
+    { label: 'Lightning' },
+    { label: 'Micro-USB' },
+    { label: 'USB-B' },
+    { label: 'Mini-USB' },
+    { label: 'Barrel' },
+    { label: 'Proprietary' },
   ];
 
   function resizeCanvas() {
     var wrapper = canvas.parentElement;
-    var w = wrapper.clientWidth;
-    var h = wrapper.clientHeight || 520;
+    var w = Math.max(wrapper.clientWidth, 300);
+    var h = Math.max(wrapper.clientHeight, 280);
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     canvas.style.width = w + 'px';
@@ -217,20 +216,32 @@
   }
 
   function getNodePositions(w, h) {
-    var pad = 60;
-    var aiX = pad + 40;
-    var toolX = w - pad - 40;
+    var topPad = 48;
+    var bottomPad = 48;
+    var sidePad = w < 500 ? 50 : 90;
+    var leftX = sidePad;
+    var rightX = w - sidePad;
     var mcpX = w / 2;
-    var mcpY = h / 2;
-    var aiNodes = aiModels.map(function (m, i) {
-      var spacing = (h - pad * 2) / (aiModels.length + 1);
-      return { x: aiX, y: pad + spacing * (i + 1), label: m.label, type: 'ai' };
+    var mcpY = (h - topPad - bottomPad) / 2 + topPad;
+    var devNodes = devices.map(function (m, i) {
+      var usable = h - topPad - bottomPad;
+      var spacing = usable / (devices.length + 1);
+      return { x: leftX, y: topPad + spacing * (i + 1), label: m.label, type: 'device' };
     });
-    var toolNodes = tools.map(function (t, i) {
-      var spacing = (h - pad * 2) / (tools.length + 1);
-      return { x: toolX, y: pad + spacing * (i + 1), label: t.label, type: 'tool' };
+    var cableNodes = cables.map(function (t, i) {
+      var usable = h - topPad - bottomPad;
+      var spacing = usable / (cables.length + 1);
+      return { x: rightX, y: topPad + spacing * (i + 1), label: t.label, type: 'cable' };
     });
-    return { ai: aiNodes, tools: toolNodes, mcp: { x: mcpX, y: mcpY } };
+    return { devices: devNodes, cables: cableNodes, hub: { x: mcpX, y: mcpY } };
+  }
+
+  function drawCurve(x1, y1, x2, y2) {
+    var cp = (x2 - x1) * 0.4;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.bezierCurveTo(x1 + cp, y1, x2 - cp, y2, x2, y2);
+    ctx.stroke();
   }
 
   function drawDiagram() {
@@ -239,96 +250,119 @@
     ctx.clearRect(0, 0, w, h);
     var pos = getNodePositions(w, h);
     var t = animProgress;
+    frameCount++;
 
-    // Draw connections
-    ctx.lineWidth = 1.5;
-    pos.ai.forEach(function (ai) {
-      pos.tools.forEach(function (tool) {
-        // "Before" connections (spaghetti) — fade out as t increases
-        var alpha = 0.35 * (1 - t);
-        if (hoveredNode && (hoveredNode.label === ai.label || hoveredNode.label === tool.label)) {
-          alpha = 0.8 * (1 - t);
+    // Column headers
+    ctx.font = '600 11px Inter, system-ui';
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = '0.08em';
+    ctx.fillStyle = CYAN + '99';
+    ctx.fillText('YOUR DEVICES', pos.devices[0].x, 24);
+    ctx.fillStyle = PURPLE + '99';
+    ctx.fillText(t < 0.5 ? 'PROPRIETARY CABLES' : 'ONE STANDARD', pos.cables[0].x, 24);
+    ctx.letterSpacing = '0';
+
+    // "Before" connections — curved spaghetti lines
+    pos.devices.forEach(function (dev) {
+      pos.cables.forEach(function (cable) {
+        var alpha = 0.3 * (1 - t);
+        if (hoveredNode) {
+          if (hoveredNode.label === dev.label || hoveredNode.label === cable.label) {
+            alpha = 0.85 * (1 - t);
+          } else {
+            alpha = 0.08 * (1 - t);
+          }
         }
         if (alpha > 0.01) {
           ctx.strokeStyle = RED + hex(alpha);
-          ctx.beginPath();
-          ctx.moveTo(ai.x, ai.y);
-          ctx.lineTo(tool.x, tool.y);
-          ctx.stroke();
+          ctx.lineWidth = 1.5;
+          drawCurve(dev.x, dev.y, cable.x, cable.y);
         }
       });
     });
 
-    // "After" connections (through MCP hub) — fade in as t increases
+    // "After" connections — clean lines through USB-C hub
     if (t > 0.01) {
-      pos.ai.forEach(function (ai) {
-        var alpha = 0.6 * t;
-        if (hoveredNode && hoveredNode.label === ai.label) alpha = 1 * t;
+      // Lines from devices to hub
+      pos.devices.forEach(function (dev) {
+        var alpha = 0.55 * t;
+        if (hoveredNode) {
+          alpha = hoveredNode.label === dev.label ? 1 * t : 0.15 * t;
+        }
         ctx.strokeStyle = CYAN + hex(alpha);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(ai.x, ai.y);
-        ctx.lineTo(pos.mcp.x, pos.mcp.y);
-        ctx.stroke();
+        ctx.lineWidth = 2.5;
+        drawCurve(dev.x, dev.y, pos.hub.x, pos.hub.y);
       });
-      pos.tools.forEach(function (tool) {
-        var alpha = 0.6 * t;
-        if (hoveredNode && hoveredNode.label === tool.label) alpha = 1 * t;
+      // Lines from hub to cables
+      pos.cables.forEach(function (cable) {
+        var alpha = 0.55 * t;
+        if (hoveredNode) {
+          alpha = hoveredNode.label === cable.label ? 1 * t : 0.15 * t;
+        }
         ctx.strokeStyle = PURPLE + hex(alpha);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(pos.mcp.x, pos.mcp.y);
-        ctx.lineTo(tool.x, tool.y);
-        ctx.stroke();
+        ctx.lineWidth = 2.5;
+        drawCurve(pos.hub.x, pos.hub.y, cable.x, cable.y);
       });
 
-      // MCP hub
+      // Hub — pulsing ring + solid circle
       var hubAlpha = t;
-      ctx.fillStyle = GREEN + hex(hubAlpha * 0.2);
-      ctx.strokeStyle = GREEN + hex(hubAlpha);
-      ctx.lineWidth = 2;
+      var pulse = Math.sin(frameCount * 0.04) * 0.15 + 0.85;
+
+      // Outer glow
       ctx.beginPath();
-      ctx.arc(pos.mcp.x, pos.mcp.y, 36, 0, Math.PI * 2);
+      ctx.arc(pos.hub.x, pos.hub.y, 46 * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = GREEN + hex(hubAlpha * 0.06);
       ctx.fill();
+
+      // Main circle
+      ctx.beginPath();
+      ctx.arc(pos.hub.x, pos.hub.y, 38, 0, Math.PI * 2);
+      ctx.fillStyle = GREEN + hex(hubAlpha * 0.2);
+      ctx.fill();
+      ctx.strokeStyle = GREEN + hex(hubAlpha * pulse);
+      ctx.lineWidth = 2.5;
       ctx.stroke();
+
+      // Label
       ctx.fillStyle = '#fff';
-      ctx.font = '600 13px Inter, system-ui';
+      ctx.font = '700 14px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.globalAlpha = hubAlpha;
-      ctx.fillText('One App', pos.mcp.x, pos.mcp.y);
+      ctx.fillText('USB-C', pos.hub.x, pos.hub.y);
       ctx.globalAlpha = 1;
     }
 
     // Draw nodes
-    ctx.lineWidth = 2;
-    pos.ai.forEach(function (n) { drawNode(n, CYAN); });
-    pos.tools.forEach(function (n) { drawNode(n, PURPLE); });
+    pos.devices.forEach(function (n) { drawNode(n, CYAN); });
+    pos.cables.forEach(function (n) { drawNode(n, PURPLE); });
 
-    // Connection count label
-    var beforeCount = aiModels.length * tools.length;
-    var afterCount = aiModels.length + tools.length;
+    // Bottom label
+    var beforeCount = devices.length * cables.length;
+    var afterCount = devices.length + cables.length;
     var countLabel = t < 0.5
-      ? beforeCount + ' phone calls'
-      : afterCount + ' connections through one app';
+      ? beforeCount + ' different cables needed'
+      : afterCount + ' connections \u2014 one standard';
     ctx.fillStyle = '#fff';
-    ctx.font = '700 16px Inter, system-ui';
+    ctx.font = '600 14px Inter, system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText(countLabel, w / 2, h - 20);
+    ctx.fillText(countLabel, w / 2, h - 16);
   }
 
   function drawNode(n, color) {
     var isHovered = hoveredNode && hoveredNode.label === n.label;
-    var r = isHovered ? 26 : 22;
-    ctx.fillStyle = color + (isHovered ? '40' : '20');
-    ctx.strokeStyle = color;
-    ctx.lineWidth = isHovered ? 2.5 : 1.5;
+    var r = isHovered ? 28 : 24;
+    // Filled circle
     ctx.beginPath();
     ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color + (isHovered ? '30' : '15');
     ctx.fill();
+    ctx.strokeStyle = color + (isHovered ? 'ff' : 'aa');
+    ctx.lineWidth = isHovered ? 2.5 : 1.5;
     ctx.stroke();
+    // Label
     ctx.fillStyle = '#fff';
-    ctx.font = (isHovered ? '600' : '500') + ' 11px Inter, system-ui';
+    ctx.font = (isHovered ? '600 12px' : '500 11px') + ' Inter, system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(n.label, n.x, n.y);
@@ -340,13 +374,9 @@
   }
 
   function animateDiagram() {
-    var speed = 0.04;
     if (Math.abs(animProgress - animTarget) > 0.005) {
-      animProgress += (animTarget - animProgress) * speed * 3;
+      animProgress += (animTarget - animProgress) * 0.12;
       if (Math.abs(animProgress - animTarget) < 0.005) animProgress = animTarget;
-      animating = true;
-    } else {
-      animating = false;
     }
     drawDiagram();
     requestAnimationFrame(animateDiagram);
@@ -358,11 +388,9 @@
       $$('.diagram-btn').forEach(function (b) { b.classList.remove('active', 'active-red'); });
       if (this.dataset.view === 'before') {
         animTarget = 0;
-        diagramState = 'before';
         this.classList.add('active-red');
       } else {
         animTarget = 1;
-        diagramState = 'after';
         this.classList.add('active');
       }
     });
@@ -376,13 +404,12 @@
     var w = canvas.width / dpr;
     var h = canvas.height / dpr;
     var pos = getNodePositions(w, h);
-    var allNodes = pos.ai.concat(pos.tools);
+    var allNodes = pos.devices.concat(pos.cables);
     hoveredNode = null;
     for (var i = 0; i < allNodes.length; i++) {
       var n = allNodes[i];
-      var dx = mx - n.x;
-      var dy = my - n.y;
-      if (dx * dx + dy * dy < 30 * 30) {
+      var dx = mx - n.x; var dy = my - n.y;
+      if (dx * dx + dy * dy < 34 * 34) {
         hoveredNode = n;
         canvas.style.cursor = 'pointer';
         return;
@@ -391,9 +418,7 @@
     canvas.style.cursor = 'default';
   });
 
-  canvas.addEventListener('mouseleave', function () {
-    hoveredNode = null;
-  });
+  canvas.addEventListener('mouseleave', function () { hoveredNode = null; });
 
   // Touch support
   canvas.addEventListener('touchstart', function (e) {
@@ -404,16 +429,12 @@
     var w = canvas.width / dpr;
     var h = canvas.height / dpr;
     var pos = getNodePositions(w, h);
-    var allNodes = pos.ai.concat(pos.tools);
+    var allNodes = pos.devices.concat(pos.cables);
     hoveredNode = null;
     for (var i = 0; i < allNodes.length; i++) {
       var n = allNodes[i];
-      var dx = mx - n.x;
-      var dy = my - n.y;
-      if (dx * dx + dy * dy < 40 * 40) {
-        hoveredNode = n;
-        return;
-      }
+      var dx = mx - n.x; var dy = my - n.y;
+      if (dx * dx + dy * dy < 44 * 44) { hoveredNode = n; return; }
     }
   }, { passive: true });
 
@@ -421,9 +442,10 @@
     setTimeout(function () { hoveredNode = null; }, 1500);
   }, { passive: true });
 
-  // Init diagram
+  // Init diagram — with delayed fallback for layout timing
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
+  setTimeout(resizeCanvas, 150);
   requestAnimationFrame(animateDiagram);
 
   // ── 11. Scroll-triggered fade-in ──────────────────────────────────────────
@@ -433,9 +455,12 @@
       if (entry.isIntersecting) {
         entry.target.style.opacity = '1';
         entry.target.style.transform = 'translateY(0)';
+        // Force Chart.js to recalculate dimensions for canvas charts
+        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 100);
+        observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
 
   fadeEls.forEach(function (el) {
     el.style.opacity = '0';
