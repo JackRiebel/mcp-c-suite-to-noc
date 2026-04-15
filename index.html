@@ -104,7 +104,9 @@
 
     <p class="section-prose">Now replace "devices" with AI models — Claude, GPT, Gemini — and "cables" with enterprise tools: Splunk for security analytics, ThousandEyes for network monitoring, ServiceNow for ticketing, Webex for collaboration. Without MCP, every AI model needs its own custom integration to every tool. Three models times six tools equals 18 bespoke connectors to build and maintain. With MCP, the AI models already have built-in MCP support — so you just stand up one MCP server per tool. Six tools, six servers, and every AI model can use all of them instantly.</p>
 
-    <p class="section-prose">Under the hood, MCP uses a client-server architecture. Each tool vendor publishes an MCP "server" — a lightweight wrapper that exposes the tool's capabilities through a standardized interface. AI applications run MCP "clients" that discover and connect to these servers automatically. The protocol defines three core primitives: <strong>tools</strong> (actions the AI can take), <strong>resources</strong> (data the AI can read), and <strong>prompts</strong> (reusable templates). A single MCP server for, say, Splunk can be used by Claude, GPT, Gemini, or any other model without any changes — the same way a USB-C cable works regardless of which laptop or phone you plug it into. And here's what makes this even more practical: when you connect to a published MCP server like ThousandEyes or Splunk, there's no ongoing maintenance on your side. When the vendor updates their product or adds new capabilities to their MCP server, those changes happen on the product side — your environment stays untouched. You connect once and stay current automatically.</p>
+    <p class="section-prose">How it works in practice: each tool vendor publishes an MCP "server" — a wrapper that exposes the tool's capabilities in a standardized way. AI applications connect to these servers automatically. A single MCP server for Splunk can be used by Claude, GPT, Gemini, or any other AI model without any changes — the same way a USB-C cable works regardless of which laptop or phone you plug it into.</p>
+
+    <p class="section-prose">And here's what makes this practical at scale: when you connect to a published MCP server like ThousandEyes or Splunk, there's no ongoing maintenance on your side. When the vendor updates their product or adds new capabilities to their MCP server, those changes happen on the product side — your environment stays untouched. You connect once and stay current automatically. No new integrations to build. No updates to manage. No additional headcount required.</p>
 
     <p class="section-prose">That's the theory. But what does it actually mean for your organization? Let's start with the outcome that affects every level of leadership — and then dig into the operational problems MCP solves on the ground.</p>
    </div>
@@ -151,7 +153,9 @@
       </div>
     </div>
 
-    <p class="section-prose">And then there's the staffing crisis. The global cybersecurity workforce gap hit <strong>4.8 million unfilled positions</strong> in 2025, growing 19% year over year <span class="cite">(ISC2, 2025 Cybersecurity Workforce Study)</span>. Of the analysts who are working, 71% report burnout <span class="cite">(Tines, Voice of the SOC Analyst)</span> and 64% say they're likely to change jobs within the year <span class="cite">(Tines/Dark Reading)</span>. Organizations with severe staffing shortages pay an extra $1.57 million per breach compared to those with adequate teams <span class="cite">(IBM, 2025 Cost of a Data Breach)</span>. We're asking fewer people to monitor more tools, triage more alerts, and somehow keep organizations safe against increasingly sophisticated threats. The math doesn't work.</p>
+    <p class="section-prose">And then there's the staffing crisis. The global cybersecurity workforce gap hit <strong>4.8 million unfilled positions</strong> in 2025, growing 19% year over year <span class="cite">(ISC2, 2025 Cybersecurity Workforce Study)</span>. Of the analysts who are working, 71% report burnout <span class="cite">(Tines, Voice of the SOC Analyst)</span> and 64% say they're likely to change jobs within the year <span class="cite">(Tines/Dark Reading)</span>. Organizations with severe staffing shortages pay an extra $1.57 million per breach compared to those with adequate teams <span class="cite">(IBM, 2025 Cost of a Data Breach)</span>.</p>
+
+    <p class="section-prose">For executives, this isn't an IT problem — it's a business risk problem. Every unfilled position is a gap in your security posture. Every burned-out analyst who quits takes institutional knowledge with them. Every alert that goes uninvestigated is a potential breach that could cost millions and land in a board presentation. The people protecting your organization are overwhelmed, understaffed, and working with tools that make their jobs harder instead of easier. That's the environment MCP walks into.</p>
 
    </div>
   </section>
@@ -244,9 +248,9 @@
       </div>
     </div>
 
-    <p class="section-prose">The financial case is just as stark. AI can theoretically automate 75-95% of common NOC/SOC tasks — log analysis, alert triage, config validation, traffic monitoring — but actual adoption sits between 12% and 35% depending on the task <span class="cite">(Anthropic Economic Index; industry estimates)</span>. That gap represents massive unrealized value.</p>
+    <p class="section-prose">For the C-suite, the financial case is straightforward. Organizations using AI and automation extensively saved <strong>$1.9 million per breach</strong> and resolved incidents <strong>80 days faster</strong> than those without <span class="cite">(IBM, 2025 Cost of a Data Breach Report)</span>. That's not a marginal improvement — it's nearly $2 million back on every major incident, and almost three months of reduced exposure. Across industries, AI-assisted operations cut mean time to resolution by roughly a third.</p>
 
-    <p class="section-prose">IBM's 2025 Cost of a Data Breach report quantifies what closing that gap looks like: organizations using AI and automation extensively saved <strong>$1.9 million per breach</strong> and resolved incidents <strong>80 days faster</strong> than those without. The average breach lifecycle fell to a 9-year low of 241 days. Across industries, AI-assisted operations cut mean time to resolution by roughly a third <span class="cite">(IBM, 2025 Cost of a Data Breach Report)</span>.</p>
+    <p class="section-prose">Yet most of that value is still untapped. AI can theoretically automate 75-95% of common NOC/SOC tasks — log analysis, alert triage, config validation, traffic monitoring — but actual adoption sits between 12% and 35% depending on the task <span class="cite">(Anthropic Economic Index; industry estimates)</span>. The gap between what's possible and what's deployed is where the ROI lives, and MCP is the fastest way to close it.</p>
 
     <p class="section-prose">And MCP's value extends well beyond incident response. An AI agent connected to the Splunk MCP server can run natural-language searches across your security logs — "show me all failed login attempts from external IPs in the last 24 hours" — without anyone writing a line of SPL <span class="cite">(CiscoDevNet — Splunk MCP server)</span>. The ThousandEyes MCP server can run on-demand tests, detect anomalies in network performance, and trace the full network path when a remote office reports slow application performance <span class="cite">(CiscoDevNet — ThousandEyes MCP server)</span>. Cisco's SD-WAN community MCP server exposes 39 tools for managing your overlay network through AI. When these servers work together through a single protocol, workflows that used to take hours of cross-referencing across separate consoles can be correlated in minutes.</p>
 
@@ -385,7 +389,7 @@
           </ol>
         </div>
       </div>
-      <p class="cb-closing">MCP isn't a product you buy — it's an open standard you adopt. The protocol is free. The SDKs are free. The MCP Scanner is free. The only cost is not starting.</p>
+      <p class="cb-closing">MCP isn't a product you buy — it's an open standard you adopt. The protocol is free. The SDKs are free. The MCP Scanner is free. The question isn't whether your organization will use MCP. It's whether you'll be the one who brought it in — or the one who's still catching up when your competitors already have.</p>
     </div>
    </div>
   </section>
