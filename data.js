@@ -176,10 +176,10 @@ const CASE_STUDIES = [
   },
   {
     company: "Cisco",
-    detail: "Developer community MCP servers for Catalyst Center and SD-WAN; Duo SSO supports MCP natively",
-    metric: "Exploring MCP across networking portfolio",
-    users: "CiscoDevNet community projects",
-    role: "Active exploration, Duo SSO integration",
+    detail: "Official MCP servers for Splunk and ThousandEyes; community servers for SD-WAN, XDR, Meraki, FMC",
+    metric: "AI-powered SPL queries, network path analysis, anomaly detection via MCP",
+    users: "CiscoDevNet — 8+ MCP server repos",
+    role: "Official servers + broad community ecosystem",
   },
   {
     company: "AWS",
@@ -274,7 +274,7 @@ const MCP_ADOPTERS = {
   enterprises: [
     { name: "Block", note: "Daily use by thousands" },
     { name: "Bloomberg", note: "~9,000 engineers" },
-    { name: "Cisco", note: "Reference architecture" },
+    { name: "Cisco", note: "Official Splunk + ThousandEyes MCP servers" },
     { name: "Cloudflare", note: "AAIF supporter" },
     { name: "Atlassian", note: "Own MCP server" },
     { name: "Figma", note: "Own MCP server" },
