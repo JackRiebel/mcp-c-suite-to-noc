@@ -189,20 +189,20 @@
   var dpr = window.devicePixelRatio || 1;
   var frameCount = 0;
 
-  var tools = [
-    { label: 'iPhone' },
-    { label: 'MacBook' },
-    { label: 'iPad' },
+  var aiModels = [
+    { label: 'Claude' },
+    { label: 'GPT' },
+    { label: 'Gemini' },
+    { label: 'Llama' },
+    { label: 'Mistral' },
   ];
-  var oldCables = [
-    { label: 'Lightning', color: CYAN },
-    { label: 'Micro-USB', color: BLUE },
-    { label: 'Barrel Plug', color: PURPLE },
-  ];
-  var chargers = [
-    { label: 'Any Charger', color: CYAN },
-    { label: 'Any Cable', color: BLUE },
-    { label: 'Any Port', color: PURPLE },
+  var entTools = [
+    { label: 'Splunk' },
+    { label: 'ThousandEyes' },
+    { label: 'ServiceNow' },
+    { label: 'XDR' },
+    { label: 'Duo' },
+    { label: 'Webex' },
   ];
 
   function resizeCanvas() {
@@ -243,215 +243,192 @@
     frameCount++;
 
     var sm = w < 500;
-    // Layout
-    var rowTop = 30;                          // device row
-    var rowBot = h - (sm ? 55 : 65);          // connector row
-    var midY = (rowTop + rowBot) / 2;         // middle zone for lines / USB-C bar
+    var boxW = sm ? 78 : 110;
+    var boxH = sm ? 30 : 36;
+    var pad = sm ? 16 : 40;
+    var leftX = pad;
+    var rightX = w - pad - boxW;
+    var midX = w / 2;
 
-    var boxW = sm ? 90 : 120;
-    var boxH = sm ? 38 : 44;
-    var gap = sm ? 12 : 24;
+    // Y positions for left column (5 AI models)
+    var aiYs = [];
+    var aiTopPad = sm ? 30 : 36;
+    var aiUsable = h - aiTopPad * 2 - 30;
+    for (var i = 0; i < aiModels.length; i++) {
+      aiYs.push(aiTopPad + (aiUsable / (aiModels.length - 1)) * i);
+    }
 
-    // ── TOP ROW: 3 device boxes ──
-    var devTotal = tools.length * boxW + (tools.length - 1) * gap;
-    var devStartX = (w - devTotal) / 2;
-    var devCenters = [];
+    // Y positions for right column (6 tools)
+    var toolYs = [];
+    var toolUsable = h - aiTopPad * 2 - 30;
+    for (var j = 0; j < entTools.length; j++) {
+      toolYs.push(aiTopPad + (toolUsable / (entTools.length - 1)) * j);
+    }
 
-    tools.forEach(function (tool, i) {
-      var x = devStartX + i * (boxW + gap);
-      var cx = x + boxW / 2;
-      devCenters.push(cx);
-
-      // Box
-      rrect(x, rowTop, boxW, boxH, 8);
-      ctx.fillStyle = 'rgba(22,22,35,0.95)';
-      ctx.fill();
-      ctx.strokeStyle = CYAN + '55';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // Label
-      ctx.fillStyle = '#fff';
-      ctx.font = '600 ' + (sm ? '12' : '14') + 'px Inter, system-ui';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(tool.label, cx, rowTop + boxH / 2);
-    });
-
-    // Column header
-    ctx.fillStyle = CYAN + '80';
+    // Column headers
     ctx.font = '600 ' + (sm ? '9' : '10') + 'px Inter, system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText('DEVICES', w / 2, rowTop - 10);
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = CYAN + '88';
+    ctx.textAlign = 'left';
+    ctx.fillText('AI MODELS', leftX, aiTopPad - 16);
+    ctx.fillStyle = PURPLE + '88';
+    ctx.textAlign = 'right';
+    ctx.fillText('YOUR TOOLS', rightX + boxW, aiTopPad - 16);
 
-    // ── BOTTOM ROW: 9 connector boxes (before) or 3 USB-C boxes (after) ──
     var ba = 1 - t;
     var aa = t;
+    var hovLabel = hoveredNode ? hoveredNode.label : null;
 
-    // BEFORE: 9 connector rectangles (3 under each device)
+    // ── BEFORE: spaghetti lines ──
     if (ba > 0.01) {
-      var cBoxW = sm ? 72 : 95;
-      var cBoxH = sm ? 30 : 34;
-      var cGap = sm ? 5 : 8;
-      var colors = [CYAN, BLUE, PURPLE];
-      var labels = ['Lightning', 'Micro-USB', 'Barrel Plug'];
-
-      ctx.fillStyle = 'rgba(255,255,255,' + (ba * 0.4) + ')';
-      ctx.font = '600 ' + (sm ? '9' : '10') + 'px Inter, system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText('CABLES NEEDED', w / 2, rowBot - 12);
-
-      tools.forEach(function (tool, ti) {
-        var dcx = devCenters[ti];
-        var groupW = 3 * cBoxW + 2 * cGap;
-        var gx = dcx - groupW / 2;
-
-        labels.forEach(function (lbl, j) {
-          var bx = gx + j * (cBoxW + cGap);
-          var by = rowBot;
-          var bcx = bx + cBoxW / 2;
-          var col = colors[j];
-
-          // Line from device down to connector
-          ctx.strokeStyle = col + hex(ba * 0.3);
-          ctx.lineWidth = 1.5;
+      aiModels.forEach(function (ai, i) {
+        var ay = aiYs[i] + boxH / 2;
+        entTools.forEach(function (tool, j) {
+          var ty = toolYs[j] + boxH / 2;
+          var alpha = 0.18 * ba;
+          if (hovLabel) {
+            alpha = (hovLabel === ai.label || hovLabel === tool.label)
+              ? 0.6 * ba : 0.04 * ba;
+          }
+          ctx.strokeStyle = RED + hex(alpha);
+          ctx.lineWidth = 1.2;
           ctx.beginPath();
-          ctx.moveTo(dcx, rowTop + boxH);
-          ctx.bezierCurveTo(dcx, midY, bcx, midY, bcx, by);
+          ctx.moveTo(leftX + boxW, ay);
+          var cp = (rightX - leftX - boxW) * 0.4;
+          ctx.bezierCurveTo(leftX + boxW + cp, ay, rightX - cp, ty, rightX, ty);
           ctx.stroke();
-
-          // Connector box
-          rrect(bx, by, cBoxW, cBoxH, 6);
-          ctx.fillStyle = col + hex(ba * 0.1);
-          ctx.fill();
-          ctx.strokeStyle = col + hex(ba * 0.5);
-          ctx.lineWidth = 1;
-          ctx.stroke();
-
-          // Label
-          ctx.fillStyle = col + hex(ba * 0.9);
-          ctx.font = '500 ' + (sm ? '8' : '10') + 'px Inter, system-ui';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(lbl, bcx, by + cBoxH / 2);
         });
       });
     }
 
-    // AFTER: USB-C bar + 3 USB-C boxes
+    // ── AFTER: lines through MCP bar ──
     if (aa > 0.01) {
+      // MCP bar
+      var barW = sm ? 36 : 48;
+      var barH = h - aiTopPad * 2 - 10;
+      var barX = midX - barW / 2;
+      var barY = aiTopPad - 5;
       var pulse = Math.sin(frameCount * 0.03) * 0.1 + 0.9;
 
-      // USB-C bar in the middle
-      var barW = devTotal + 40;
-      var barH = sm ? 32 : 38;
-      var barX = (w - barW) / 2;
-      var barY = midY - barH / 2;
+      // Lines from AI to bar
+      aiModels.forEach(function (ai, i) {
+        var ay = aiYs[i] + boxH / 2;
+        var alpha = 0.45 * aa;
+        if (hovLabel && hovLabel !== ai.label) {
+          var isToolHovered = entTools.some(function(t) { return t.label === hovLabel; });
+          if (!isToolHovered) alpha = 0.12 * aa;
+        }
+        ctx.strokeStyle = CYAN + hex(alpha);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(leftX + boxW, ay);
+        ctx.lineTo(barX, ay);
+        ctx.stroke();
 
-      ctx.shadowColor = GREEN + hex(aa * 0.3);
-      ctx.shadowBlur = 20;
-      rrect(barX, barY, barW, barH, barH / 2);
-      ctx.fillStyle = 'rgba(10,10,18,' + (aa * 0.97) + ')';
+        // Flow dot
+        var dp = ((frameCount * 0.01 + i * 0.2) % 1);
+        var dx = leftX + boxW + dp * (barX - leftX - boxW);
+        ctx.beginPath();
+        ctx.arc(dx, ay, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = CYAN + hex(aa * 0.7);
+        ctx.fill();
+      });
+
+      // Lines from bar to tools
+      entTools.forEach(function (tool, j) {
+        var ty = toolYs[j] + boxH / 2;
+        var alpha = 0.45 * aa;
+        if (hovLabel && hovLabel !== tool.label) {
+          var isAIHovered = aiModels.some(function(a) { return a.label === hovLabel; });
+          if (!isAIHovered) alpha = 0.12 * aa;
+        }
+        ctx.strokeStyle = PURPLE + hex(alpha);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(barX + barW, ty);
+        ctx.lineTo(rightX, ty);
+        ctx.stroke();
+
+        // Flow dot
+        var dp = ((frameCount * 0.01 + j * 0.17) % 1);
+        var dx = barX + barW + dp * (rightX - barX - barW);
+        ctx.beginPath();
+        ctx.arc(dx, ty, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = PURPLE + hex(aa * 0.7);
+        ctx.fill();
+      });
+
+      // MCP bar background
+      ctx.shadowColor = GREEN + hex(aa * 0.35);
+      ctx.shadowBlur = 24;
+      rrect(barX, barY, barW, barH, barW / 2);
+      ctx.fillStyle = 'rgba(8,8,16,' + (aa * 0.97) + ')';
       ctx.fill();
       ctx.shadowColor = 'transparent';
 
-      rrect(barX, barY, barW, barH, barH / 2);
-      ctx.fillStyle = GREEN + hex(aa * 0.12);
+      rrect(barX, barY, barW, barH, barW / 2);
+      ctx.fillStyle = GREEN + hex(aa * 0.1);
       ctx.fill();
       ctx.strokeStyle = GREEN + hex(aa * pulse);
       ctx.lineWidth = 2;
       ctx.stroke();
 
+      // MCP label (vertical)
+      ctx.save();
+      ctx.translate(midX, barY + barH / 2);
+      ctx.rotate(-Math.PI / 2);
       ctx.fillStyle = '#fff';
       ctx.globalAlpha = aa;
-      ctx.font = '700 ' + (sm ? '12' : '14') + 'px Inter, system-ui';
+      ctx.font = '700 ' + (sm ? '11' : '13') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('USB-C', w / 2, midY);
+      ctx.fillText('M C P', 0, 0);
       ctx.globalAlpha = 1;
-
-      // Lines from devices down to bar
-      devCenters.forEach(function (dcx, i) {
-        ctx.strokeStyle = GREEN + hex(aa * 0.45);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(dcx, rowTop + boxH);
-        ctx.lineTo(dcx, barY);
-        ctx.stroke();
-
-        // Flow dot
-        var dp = ((frameCount * 0.012 + i * 0.33) % 1);
-        var dy = rowTop + boxH + dp * (barY - rowTop - boxH);
-        ctx.beginPath();
-        ctx.arc(dcx, dy, 3, 0, Math.PI * 2);
-        ctx.fillStyle = GREEN + hex(aa * 0.8);
-        ctx.fill();
-      });
-
-      // 3 charger boxes below bar
-      var cBoxW = sm ? 90 : 115;
-      var cBoxH = sm ? 34 : 40;
-      var cGap = sm ? 12 : 24;
-      var cTotal = chargers.length * cBoxW + (chargers.length - 1) * cGap;
-      var cStartX = (w - cTotal) / 2;
-
-      ctx.fillStyle = 'rgba(255,255,255,' + (aa * 0.4) + ')';
-      ctx.font = '600 ' + (sm ? '9' : '10') + 'px Inter, system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText('WORKS WITH', w / 2, rowBot - 12);
-
-      chargers.forEach(function (ch, i) {
-        var cx = cStartX + i * (cBoxW + cGap);
-        var ccx = cx + cBoxW / 2;
-
-        // Line from bar to charger
-        ctx.strokeStyle = ch.color + hex(aa * 0.4);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(ccx, barY + barH);
-        ctx.lineTo(ccx, rowBot);
-        ctx.stroke();
-
-        // Flow dot
-        var dp = ((frameCount * 0.015 + i * 0.33) % 1);
-        var dy = barY + barH + dp * (rowBot - barY - barH);
-        ctx.beginPath();
-        ctx.arc(ccx, dy, 3, 0, Math.PI * 2);
-        ctx.fillStyle = ch.color + hex(aa * 0.7);
-        ctx.fill();
-
-        // Charger box
-        ctx.shadowColor = ch.color + hex(aa * 0.2);
-        ctx.shadowBlur = 12;
-        rrect(cx, rowBot, cBoxW, cBoxH, 8);
-        ctx.fillStyle = 'rgba(15,15,25,' + (aa * 0.95) + ')';
-        ctx.fill();
-        ctx.shadowColor = 'transparent';
-
-        rrect(cx, rowBot, cBoxW, cBoxH, 8);
-        ctx.fillStyle = ch.color + hex(aa * 0.1);
-        ctx.fill();
-        ctx.strokeStyle = ch.color + hex(aa * 0.55);
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        ctx.fillStyle = '#fff';
-        ctx.globalAlpha = aa;
-        ctx.font = '600 ' + (sm ? '11' : '13') + 'px Inter, system-ui';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(ch.label, ccx, rowBot + cBoxH / 2);
-        ctx.globalAlpha = 1;
-      });
+      ctx.restore();
     }
 
+    // ── LEFT COLUMN: AI model boxes ──
+    aiModels.forEach(function (ai, i) {
+      var y = aiYs[i];
+      var isHov = hovLabel === ai.label;
+      rrect(leftX, y, boxW, boxH, 7);
+      ctx.fillStyle = isHov ? 'rgba(34,211,238,0.12)' : 'rgba(20,20,32,0.95)';
+      ctx.fill();
+      ctx.strokeStyle = isHov ? CYAN + 'cc' : CYAN + '44';
+      ctx.lineWidth = isHov ? 2 : 1;
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = (isHov ? '700 ' : '500 ') + (sm ? '11' : '13') + 'px Inter, system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ai.label, leftX + boxW / 2, y + boxH / 2);
+    });
+
+    // ── RIGHT COLUMN: tool boxes ──
+    entTools.forEach(function (tool, j) {
+      var y = toolYs[j];
+      var isHov = hovLabel === tool.label;
+      rrect(rightX, y, boxW, boxH, 7);
+      ctx.fillStyle = isHov ? 'rgba(167,139,250,0.12)' : 'rgba(20,20,32,0.95)';
+      ctx.fill();
+      ctx.strokeStyle = isHov ? PURPLE + 'cc' : PURPLE + '44';
+      ctx.lineWidth = isHov ? 2 : 1;
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = (isHov ? '700 ' : '500 ') + (sm ? '10' : '13') + 'px Inter, system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tool.label, rightX + boxW / 2, y + boxH / 2);
+    });
+
     // ── BOTTOM LABEL ──
-    ctx.fillStyle = '#fff';
-    ctx.font = '600 ' + (sm ? '12' : '14') + 'px Inter, system-ui';
-    ctx.textAlign = 'center';
+    var total = aiModels.length * entTools.length;
     var label = t < 0.5
-      ? (tools.length * oldCables.length) + ' different cables in your drawer'
-      : '1 standard \u2014 every device, every charger';
+      ? total + ' custom integrations to build & maintain'
+      : (aiModels.length + entTools.length) + ' connections through one standard';
+    ctx.fillStyle = '#fff';
+    ctx.font = '600 ' + (sm ? '11' : '14') + 'px Inter, system-ui';
+    ctx.textAlign = 'center';
     ctx.fillText(label, w / 2, h - (sm ? 8 : 12));
   }
 
@@ -476,6 +453,81 @@
       }
     });
   });
+
+  // Hover detection for boxes
+  canvas.addEventListener('mousemove', function (e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left;
+    var my = e.clientY - rect.top;
+    var w = canvas.width / dpr;
+    var h = canvas.height / dpr;
+    var sm = w < 500;
+    var boxW = sm ? 78 : 110;
+    var boxH = sm ? 30 : 36;
+    var pad = sm ? 16 : 40;
+    var leftX = pad;
+    var rightX = w - pad - boxW;
+    var aiTopPad = sm ? 30 : 36;
+    var aiUsable = h - aiTopPad * 2 - 30;
+    var toolUsable = aiUsable;
+    hoveredNode = null;
+
+    for (var i = 0; i < aiModels.length; i++) {
+      var y = aiTopPad + (aiUsable / (aiModels.length - 1)) * i;
+      if (mx >= leftX && mx <= leftX + boxW && my >= y && my <= y + boxH) {
+        hoveredNode = aiModels[i];
+        canvas.style.cursor = 'pointer';
+        return;
+      }
+    }
+    for (var j = 0; j < entTools.length; j++) {
+      var y = aiTopPad + (toolUsable / (entTools.length - 1)) * j;
+      if (mx >= rightX && mx <= rightX + boxW && my >= y && my <= y + boxH) {
+        hoveredNode = entTools[j];
+        canvas.style.cursor = 'pointer';
+        return;
+      }
+    }
+    canvas.style.cursor = 'default';
+  });
+
+  canvas.addEventListener('mouseleave', function () { hoveredNode = null; });
+
+  // Touch support
+  canvas.addEventListener('touchstart', function (e) {
+    var rect = canvas.getBoundingClientRect();
+    var touch = e.touches[0];
+    var mx = touch.clientX - rect.left;
+    var my = touch.clientY - rect.top;
+    var w = canvas.width / dpr;
+    var h = canvas.height / dpr;
+    var sm = w < 500;
+    var boxW = sm ? 78 : 110;
+    var boxH = sm ? 30 : 36;
+    var pad = sm ? 16 : 40;
+    var leftX = pad;
+    var rightX = w - pad - boxW;
+    var aiTopPad = sm ? 30 : 36;
+    var aiUsable = h - aiTopPad * 2 - 30;
+    hoveredNode = null;
+
+    for (var i = 0; i < aiModels.length; i++) {
+      var y = aiTopPad + (aiUsable / (aiModels.length - 1)) * i;
+      if (mx >= leftX && mx <= leftX + boxW && my >= y && my <= y + boxH) {
+        hoveredNode = aiModels[i]; return;
+      }
+    }
+    for (var j = 0; j < entTools.length; j++) {
+      var y = aiTopPad + (aiUsable / (entTools.length - 1)) * j;
+      if (mx >= rightX && mx <= rightX + boxW && my >= y && my <= y + boxH) {
+        hoveredNode = entTools[j]; return;
+      }
+    }
+  }, { passive: true });
+
+  canvas.addEventListener('touchend', function () {
+    setTimeout(function () { hoveredNode = null; }, 1500);
+  }, { passive: true });
 
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
