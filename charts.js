@@ -303,13 +303,11 @@
 
     // ── AFTER: lines through MCP bar ──
     if (aa > 0.01) {
-      // MCP bar — spans from top-most node to bottom-most node
-      var barW = sm ? 36 : 48;
+      // MCP hub — a single bubble in the vertical center
+      var hubR = sm ? 34 : 44;
       var topNode = Math.min(aiYs[0], toolYs[0]);
       var botNode = Math.max(aiYs[aiYs.length - 1] + boxH, toolYs[toolYs.length - 1] + boxH);
-      var barY = topNode - 4;
-      var barH = botNode - topNode + 8;
-      var barX = midX - barW / 2;
+      var hubY = (topNode + botNode) / 2;
       var pulse = Math.sin(frameCount * 0.03) * 0.1 + 0.9;
 
       // Hover logic — asymmetric:
@@ -327,7 +325,7 @@
         rotatingToolIdx = Math.floor(frameCount / cyclePeriod) % entTools.length;
       }
 
-      // Lines from AI to bar
+      // Lines from AI to hub (curved into the bubble)
       aiModels.forEach(function (ai, i) {
         var ay = aiYs[i] + boxH / 2;
         var alpha = 0.5 * aa;
@@ -336,73 +334,84 @@
         if (hovIsTool) alpha = 0.65 * aa;
         ctx.strokeStyle = CYAN + hex(alpha);
         ctx.lineWidth = 2;
+        var sx = leftX + boxW;
+        var ex = midX - hubR;
+        var cp = (ex - sx) * 0.55;
         ctx.beginPath();
-        ctx.moveTo(leftX + boxW, ay);
-        ctx.lineTo(barX, ay);
+        ctx.moveTo(sx, ay);
+        ctx.bezierCurveTo(sx + cp, ay, ex - cp * 0.5, hubY, ex, hubY);
         ctx.stroke();
 
-        // Flow dot
+        // Flow dot along curve
         var dp = ((frameCount * 0.01 + i * 0.2) % 1);
-        var dx = leftX + boxW + dp * (barX - leftX - boxW);
+        var dotX = sx + dp * (ex - sx);
+        var dotY = ay + (hubY - ay) * (dp * dp); // ease into hub
         ctx.beginPath();
-        ctx.arc(dx, ay, 2.5, 0, Math.PI * 2);
+        ctx.arc(dotX, dotY, 2.5, 0, Math.PI * 2);
         ctx.fillStyle = CYAN + hex(alpha);
         ctx.fill();
       });
 
-      // Lines from bar to tools
+      // Lines from hub to tools (curved out of the bubble)
       entTools.forEach(function (tool, j) {
         var ty = toolYs[j] + boxH / 2;
         var alpha = 0.5 * aa;
         if (hovIsTool && hovLabel !== tool.label) alpha = 0.12 * aa;
         if (hovIsTool && hovLabel === tool.label) alpha = 0.9 * aa;
-        // When AI is hovered, only rotating tool is bright
         if (hovIsAI) {
           alpha = (j === rotatingToolIdx) ? 0.9 * aa : 0.12 * aa;
         }
         ctx.strokeStyle = PURPLE + hex(alpha);
         ctx.lineWidth = 2;
+        var sx = midX + hubR;
+        var ex = rightX;
+        var cp = (ex - sx) * 0.55;
         ctx.beginPath();
-        ctx.moveTo(barX + barW, ty);
-        ctx.lineTo(rightX, ty);
+        ctx.moveTo(sx, hubY);
+        ctx.bezierCurveTo(sx + cp * 0.5, hubY, ex - cp, ty, ex, ty);
         ctx.stroke();
 
-        // Flow dot
+        // Flow dot along curve
         var dp = ((frameCount * 0.01 + j * 0.17) % 1);
-        var dx = barX + barW + dp * (rightX - barX - barW);
+        var dotX = sx + dp * (ex - sx);
+        var dotY = hubY + (ty - hubY) * (1 - (1 - dp) * (1 - dp));
         ctx.beginPath();
-        ctx.arc(dx, ty, 2.5, 0, Math.PI * 2);
+        ctx.arc(dotX, dotY, 2.5, 0, Math.PI * 2);
         ctx.fillStyle = PURPLE + hex(alpha);
         ctx.fill();
       });
 
-      // MCP bar background
-      ctx.shadowColor = GREEN + hex(aa * 0.35);
-      ctx.shadowBlur = 24;
-      rrect(barX, barY, barW, barH, barW / 2);
+      // MCP hub bubble — outer glow ring
+      ctx.beginPath();
+      ctx.arc(midX, hubY, hubR + 6 * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = GREEN + hex(aa * 0.06);
+      ctx.fill();
+
+      // MCP hub bubble — main
+      ctx.shadowColor = GREEN + hex(aa * 0.45);
+      ctx.shadowBlur = 26;
+      ctx.beginPath();
+      ctx.arc(midX, hubY, hubR, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(8,8,16,' + (aa * 0.97) + ')';
       ctx.fill();
       ctx.shadowColor = 'transparent';
 
-      rrect(barX, barY, barW, barH, barW / 2);
-      ctx.fillStyle = GREEN + hex(aa * 0.1);
+      ctx.beginPath();
+      ctx.arc(midX, hubY, hubR, 0, Math.PI * 2);
+      ctx.fillStyle = GREEN + hex(aa * 0.12);
       ctx.fill();
       ctx.strokeStyle = GREEN + hex(aa * pulse);
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // MCP label (vertical)
-      ctx.save();
-      ctx.translate(midX, barY + barH / 2);
-      ctx.rotate(-Math.PI / 2);
+      // MCP label
       ctx.fillStyle = '#fff';
       ctx.globalAlpha = aa;
-      ctx.font = '700 ' + (sm ? '11' : '13') + 'px Inter, system-ui';
+      ctx.font = '700 ' + (sm ? '14' : '17') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('M C P', 0, 0);
+      ctx.fillText('MCP', midX, hubY);
       ctx.globalAlpha = 1;
-      ctx.restore();
     }
 
     // Determine hover context for box styling
