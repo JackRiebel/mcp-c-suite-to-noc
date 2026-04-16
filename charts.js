@@ -312,20 +312,27 @@
       var barX = midX - barW / 2;
       var pulse = Math.sin(frameCount * 0.03) * 0.1 + 0.9;
 
-      // Hover logic: if ANY node is hovered, ALL lines on BOTH sides
-      // stay lit — because that's the point of MCP. One tool connects
-      // to every AI model. One AI model connects to every tool.
+      // Hover logic — asymmetric:
+      // - Hover a TOOL: one MCP server serves all AIs → all AI lines bright
+      // - Hover an AI: each tool still has its own MCP server → rotate
+      //   through tools one at a time to show the AI reaching each one
       var isAnyHovered = !!hovLabel;
       var hovIsAI = isAnyHovered && aiModels.some(function(a) { return a.label === hovLabel; });
       var hovIsTool = isAnyHovered && entTools.some(function(t) { return t.label === hovLabel; });
+
+      // When an AI is hovered, cycle through tools (one highlighted at a time)
+      var rotatingToolIdx = -1;
+      if (hovIsAI) {
+        var cyclePeriod = 60; // frames per tool
+        rotatingToolIdx = Math.floor(frameCount / cyclePeriod) % entTools.length;
+      }
 
       // Lines from AI to bar
       aiModels.forEach(function (ai, i) {
         var ay = aiYs[i] + boxH / 2;
         var alpha = 0.5 * aa;
-        // Dim only if an AI is hovered and it's not this one
         if (hovIsAI && hovLabel !== ai.label) alpha = 0.12 * aa;
-        // If a tool is hovered, keep ALL AI lines bright
+        if (hovIsAI && hovLabel === ai.label) alpha = 0.9 * aa;
         if (hovIsTool) alpha = 0.65 * aa;
         ctx.strokeStyle = CYAN + hex(alpha);
         ctx.lineWidth = 2;
@@ -347,10 +354,12 @@
       entTools.forEach(function (tool, j) {
         var ty = toolYs[j] + boxH / 2;
         var alpha = 0.5 * aa;
-        // Dim only if a tool is hovered and it's not this one
         if (hovIsTool && hovLabel !== tool.label) alpha = 0.12 * aa;
-        // If an AI is hovered, keep ALL tool lines bright
-        if (hovIsAI) alpha = 0.65 * aa;
+        if (hovIsTool && hovLabel === tool.label) alpha = 0.9 * aa;
+        // When AI is hovered, only rotating tool is bright
+        if (hovIsAI) {
+          alpha = (j === rotatingToolIdx) ? 0.9 * aa : 0.12 * aa;
+        }
         ctx.strokeStyle = PURPLE + hex(alpha);
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -400,6 +409,12 @@
     var hovIsAIBox = hovLabel && aiModels.some(function(a) { return a.label === hovLabel; });
     var hovIsToolBox = hovLabel && entTools.some(function(t) { return t.label === hovLabel; });
 
+    // Calculate rotating tool for AI hover (only applies in "after" state)
+    var rotTool = -1;
+    if (hovIsAIBox && aa > 0.5) {
+      rotTool = Math.floor(frameCount / 60) % entTools.length;
+    }
+
     // ── LEFT COLUMN: AI model boxes ──
     aiModels.forEach(function (ai, i) {
       var y = aiYs[i];
@@ -424,17 +439,22 @@
     entTools.forEach(function (tool, j) {
       var y = toolYs[j];
       var isThis = hovLabel === tool.label;
-      // Bright if: this is hovered, OR an AI is hovered (all tools stay lit), OR nothing hovered
-      var bright = isThis || hovIsAIBox || !hovLabel;
+      // Bright if: this is hovered, OR (AI hovered AND this is the rotating tool), OR nothing hovered
+      var bright;
+      if (isThis) bright = true;
+      else if (hovIsAIBox) bright = (j === rotTool);
+      else if (hovIsToolBox) bright = false; // another tool is hovered
+      else bright = true;
       var dimmed = hovLabel && !bright;
+      var isRot = hovIsAIBox && j === rotTool;
       rrect(rightX, y, boxW, boxH, 7);
-      ctx.fillStyle = isThis ? 'rgba(167,139,250,0.12)' : 'rgba(20,20,32,0.95)';
+      ctx.fillStyle = isThis ? 'rgba(167,139,250,0.12)' : (isRot ? 'rgba(167,139,250,0.08)' : 'rgba(20,20,32,0.95)');
       ctx.fill();
-      ctx.strokeStyle = dimmed ? PURPLE + '22' : (isThis ? PURPLE + 'dd' : PURPLE + '55');
-      ctx.lineWidth = isThis ? 2 : 1;
+      ctx.strokeStyle = dimmed ? PURPLE + '22' : ((isThis || isRot) ? PURPLE + 'dd' : PURPLE + '55');
+      ctx.lineWidth = (isThis || isRot) ? 2 : 1;
       ctx.stroke();
       ctx.fillStyle = dimmed ? 'rgba(255,255,255,0.3)' : '#fff';
-      ctx.font = (isThis ? '700 ' : '500 ') + (sm ? '10' : '13') + 'px Inter, system-ui';
+      ctx.font = ((isThis || isRot) ? '700 ' : '500 ') + (sm ? '10' : '13') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(tool.label, rightX + boxW / 2, y + boxH / 2);
