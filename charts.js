@@ -190,17 +190,17 @@
   var frameCount = 0;
 
   var devices = [
-    { label: 'Phone' },
-    { label: 'Laptop' },
-    { label: 'Tablet' },
+    { label: 'Claude' },
+    { label: 'GPT' },
+    { label: 'Gemini' },
   ];
   var cables = [
-    { label: 'Lightning' },
-    { label: 'Micro-USB' },
-    { label: 'USB-B' },
-    { label: 'Mini-USB' },
-    { label: 'Barrel' },
-    { label: 'Proprietary' },
+    { label: 'Splunk' },
+    { label: 'ThousandEyes' },
+    { label: 'ServiceNow' },
+    { label: 'XDR' },
+    { label: 'Duo' },
+    { label: 'Webex' },
   ];
 
   function resizeCanvas() {
@@ -256,9 +256,9 @@
     ctx.textAlign = 'center';
     ctx.letterSpacing = '0.08em';
     ctx.fillStyle = CYAN + '99';
-    ctx.fillText('YOUR DEVICES', pos.devices[0].x, 24);
+    ctx.fillText('AI MODELS', pos.devices[0].x, 24);
     ctx.fillStyle = PURPLE + '99';
-    ctx.fillText(t < 0.5 ? 'PROPRIETARY CABLES' : 'ONE STANDARD', pos.cables[0].x, 24);
+    ctx.fillText('YOUR TOOLS', pos.cables[0].x, 24);
     ctx.letterSpacing = '0';
 
     // "Before" connections — curved spaghetti lines
@@ -334,7 +334,7 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.globalAlpha = hubAlpha;
-      ctx.fillText('USB-C', pos.hub.x, pos.hub.y);
+      ctx.fillText('MCP', pos.hub.x, pos.hub.y);
       ctx.globalAlpha = 1;
     }
 
@@ -345,8 +345,8 @@
     // Bottom label
     var beforeCount = devices.length * cables.length;
     var countLabel = t < 0.5
-      ? beforeCount + ' different cables needed'
-      : cables.length + ' devices, 1 standard \u2014 done';
+      ? beforeCount + ' custom integrations'
+      : cables.length + ' MCP servers \u2014 every AI model connected';
     ctx.fillStyle = '#fff';
     ctx.font = '600 14px Inter, system-ui';
     ctx.textAlign = 'center';

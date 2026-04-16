@@ -85,24 +85,23 @@
     <p class="section-prose">The easiest way to understand MCP is to think about USB-C. Before USB-C, every device needed its own cable — Lightning for your iPhone, Micro-USB for your headphones, a barrel connector for your laptop, something proprietary for your camera. Your drawer was a mess of incompatible cables. USB-C replaced all of that with one universal standard. MCP does the same thing for AI integrations.</p>
 
     <div class="chart-card wide">
-      <h3>The Integration Problem — As a Cable Drawer</h3>
-      <p class="chart-desc">Toggle between views to see what one universal standard changes.</p>
+      <h3>Now Apply That to AI</h3>
+      <p class="chart-desc">Toggle to see what happens when you give AI models one universal way to connect to your tools.</p>
       <div class="diagram-wrapper">
         <canvas id="mcpDiagram"></canvas>
       </div>
       <div class="diagram-controls">
-        <button class="diagram-btn active-red" data-view="before">Before USB-C: Cable Chaos</button>
-        <button class="diagram-btn" data-view="after">After USB-C: One Standard</button>
+        <button class="diagram-btn active-red" data-view="before">Before MCP: Custom Integrations</button>
+        <button class="diagram-btn" data-view="after">With MCP: One Standard</button>
       </div>
       <div class="diagram-legend">
-        <span><span class="legend-dot" style="background:var(--cyan)"></span> Your Devices</span>
-        <span><span class="legend-dot" style="background:var(--purple)"></span> Old Cables</span>
-        <span><span class="legend-dot" style="background:var(--green)"></span> USB-C</span>
+        <span><span class="legend-dot" style="background:var(--cyan)"></span> AI Models</span>
+        <span><span class="legend-dot" style="background:var(--purple)"></span> Your Tools</span>
+        <span><span class="legend-dot" style="background:var(--green)"></span> MCP</span>
       </div>
-      <p class="diagram-footnote">Replace devices with AI models and cables with enterprise tools — that's MCP.</p>
     </div>
 
-    <p class="section-prose">Now replace "devices" with AI models — Claude, GPT, Gemini — and "cables" with enterprise tools: Splunk for security analytics, ThousandEyes for network monitoring, ServiceNow for ticketing, Webex for collaboration. Without MCP, every AI model needs its own custom integration to every tool. Three models times six tools equals 18 bespoke connectors to build and maintain. With MCP, the AI models already have built-in MCP support — so you just stand up one MCP server per tool. Six tools, six servers, and every AI model can use all of them instantly.</p>
+    <p class="section-prose">Without MCP, every AI model needs its own custom integration to every tool in your stack. Three AI models times six tools equals 18 bespoke connectors to build and maintain. With MCP, Claude, GPT, and Gemini already have built-in MCP support — so you just stand up one MCP server per tool. Six servers for Splunk, ThousandEyes, ServiceNow, XDR, Duo, and Webex — and every AI model can use all of them instantly.</p>
 
     <p class="section-prose">How it works in practice: MCP uses a client-server architecture. Each tool vendor publishes an MCP "server" — a lightweight wrapper that exposes the tool's capabilities through a standardized interface. AI applications run MCP "clients" that discover and connect to these servers. The protocol defines three primitives: <strong>tools</strong> (actions the AI can execute), <strong>resources</strong> (data the AI can read), and <strong>prompts</strong> (reusable interaction templates). A single MCP server for Splunk can be used by Claude, GPT, Gemini, or any other AI model without modification — the same way a USB-C cable works regardless of which device you plug it into.</p>
 
