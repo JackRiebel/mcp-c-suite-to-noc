@@ -189,18 +189,15 @@
   var dpr = window.devicePixelRatio || 1;
   var frameCount = 0;
 
-  var devices = [
-    { label: 'Claude' },
-    { label: 'GPT' },
-    { label: 'Gemini' },
-  ];
-  var cables = [
+  var tools = [
     { label: 'Splunk' },
     { label: 'ThousandEyes' },
     { label: 'ServiceNow' },
-    { label: 'XDR' },
-    { label: 'Duo' },
-    { label: 'Webex' },
+  ];
+  var ais = [
+    { label: 'Claude', color: CYAN },
+    { label: 'GPT', color: BLUE },
+    { label: 'Gemini', color: PURPLE },
   ];
 
   function resizeCanvas() {
@@ -214,167 +211,218 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function getNodePositions(w, h) {
-    var topPad = 48;
-    var bottomPad = 48;
-    var sidePad = w < 500 ? 50 : 90;
-    var leftX = sidePad;
-    var rightX = w - sidePad;
-    var mcpX = w / 2;
-    var mcpY = (h - topPad - bottomPad) / 2 + topPad;
-    var devNodes = devices.map(function (m, i) {
-      var usable = h - topPad - bottomPad;
-      var spacing = usable / (devices.length + 1);
-      return { x: leftX, y: topPad + spacing * (i + 1), label: m.label, type: 'device' };
-    });
-    var cableNodes = cables.map(function (t, i) {
-      var usable = h - topPad - bottomPad;
-      var spacing = usable / (cables.length + 1);
-      return { x: rightX, y: topPad + spacing * (i + 1), label: t.label, type: 'cable' };
-    });
-    return { devices: devNodes, cables: cableNodes, hub: { x: mcpX, y: mcpY } };
+  function hex(alpha) {
+    var v = Math.round(Math.max(0, Math.min(1, alpha)) * 255);
+    return (v < 16 ? '0' : '') + v.toString(16);
   }
 
-  function drawCurve(x1, y1, x2, y2) {
-    var cp = (x2 - x1) * 0.4;
+  function drawRoundRect(x, y, w, h, r) {
     ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.bezierCurveTo(x1 + cp, y1, x2 - cp, y2, x2, y2);
-    ctx.stroke();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
   }
 
   function drawDiagram() {
     var w = canvas.width / dpr;
     var h = canvas.height / dpr;
     ctx.clearRect(0, 0, w, h);
-    var pos = getNodePositions(w, h);
     var t = animProgress;
     frameCount++;
 
-    // Column headers
-    ctx.font = '600 11px Inter, system-ui';
-    ctx.textAlign = 'center';
-    ctx.letterSpacing = '0.08em';
-    ctx.fillStyle = CYAN + '99';
-    ctx.fillText('AI MODELS', pos.devices[0].x, 24);
-    ctx.fillStyle = PURPLE + '99';
-    ctx.fillText('YOUR TOOLS', pos.cables[0].x, 24);
-    ctx.letterSpacing = '0';
+    var compact = w < 500;
+    var cardW = compact ? 100 : 130;
+    var cardH = compact ? 140 : 160;
+    var portR = 6;
+    var gap = compact ? 20 : 40;
+    var totalW = tools.length * cardW + (tools.length - 1) * gap;
+    var startX = (w - totalW) / 2;
+    var cardY = 50;
+    var portSpacing = 30;
+    var portStartY = cardY + 50;
+    var mcpY = cardY + cardH + 60;
+    var aiY = mcpY + 50;
 
-    // "Before" connections — curved spaghetti lines
-    pos.devices.forEach(function (dev) {
-      pos.cables.forEach(function (cable) {
-        var alpha = 0.3 * (1 - t);
-        if (hoveredNode) {
-          if (hoveredNode.label === dev.label || hoveredNode.label === cable.label) {
-            alpha = 0.85 * (1 - t);
-          } else {
-            alpha = 0.08 * (1 - t);
-          }
-        }
-        if (alpha > 0.01) {
-          ctx.strokeStyle = RED + hex(alpha);
-          ctx.lineWidth = 1.5;
-          drawCurve(dev.x, dev.y, cable.x, cable.y);
-        }
-      });
-    });
+    // Draw tool cards
+    tools.forEach(function (tool, ti) {
+      var cx = startX + ti * (cardW + gap) + cardW / 2;
+      var cardLeft = cx - cardW / 2;
 
-    // "After" connections — clean lines through USB-C hub
-    if (t > 0.01) {
-      // Lines from devices to hub
-      pos.devices.forEach(function (dev) {
-        var alpha = 0.55 * t;
-        if (hoveredNode) {
-          alpha = hoveredNode.label === dev.label ? 1 * t : 0.15 * t;
-        }
-        ctx.strokeStyle = CYAN + hex(alpha);
-        ctx.lineWidth = 2.5;
-        drawCurve(dev.x, dev.y, pos.hub.x, pos.hub.y);
-      });
-      // Lines from hub to cables
-      pos.cables.forEach(function (cable) {
-        var alpha = 0.55 * t;
-        if (hoveredNode) {
-          alpha = hoveredNode.label === cable.label ? 1 * t : 0.15 * t;
-        }
-        ctx.strokeStyle = PURPLE + hex(alpha);
-        ctx.lineWidth = 2.5;
-        drawCurve(pos.hub.x, pos.hub.y, cable.x, cable.y);
-      });
-
-      // Hub — pulsing ring + solid circle
-      var hubAlpha = t;
-      var pulse = Math.sin(frameCount * 0.04) * 0.15 + 0.85;
-
-      // Outer glow
-      ctx.beginPath();
-      ctx.arc(pos.hub.x, pos.hub.y, 50 * pulse, 0, Math.PI * 2);
-      ctx.fillStyle = GREEN + hex(hubAlpha * 0.06);
+      // Card background
+      drawRoundRect(cardLeft, cardY, cardW, cardH, 10);
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
       ctx.fill();
-
-      // Solid dark background (hides lines behind hub)
-      ctx.beginPath();
-      ctx.arc(pos.hub.x, pos.hub.y, 40, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(10,10,15,' + (hubAlpha * 0.95) + ')';
-      ctx.fill();
-
-      // Green fill + stroke
-      ctx.beginPath();
-      ctx.arc(pos.hub.x, pos.hub.y, 40, 0, Math.PI * 2);
-      ctx.fillStyle = GREEN + hex(hubAlpha * 0.25);
-      ctx.fill();
-      ctx.strokeStyle = GREEN + hex(hubAlpha * pulse);
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Label
+      // Tool name
       ctx.fillStyle = '#fff';
-      ctx.font = '700 14px Inter, system-ui';
+      ctx.font = '600 ' + (compact ? '11' : '13') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.globalAlpha = hubAlpha;
-      ctx.fillText('MCP', pos.hub.x, pos.hub.y);
+      ctx.fillText(tool.label, cx, cardY + 24);
+
+      // Connector ports
+      ais.forEach(function (ai, ai_i) {
+        var portY = portStartY + ai_i * portSpacing;
+
+        // "Before" state: each tool has 3 different colored ports
+        var beforeAlpha = 1 - t;
+        if (beforeAlpha > 0.01) {
+          // Port circle
+          ctx.beginPath();
+          ctx.arc(cx - 20, portY, portR, 0, Math.PI * 2);
+          ctx.fillStyle = ai.color + hex(beforeAlpha * 0.3);
+          ctx.fill();
+          ctx.strokeStyle = ai.color + hex(beforeAlpha * 0.8);
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Port label
+          ctx.fillStyle = ai.color + hex(beforeAlpha * 0.9);
+          ctx.font = '500 ' + (compact ? '9' : '10') + 'px Inter, system-ui';
+          ctx.textAlign = 'left';
+          ctx.fillText(ai.label, cx - 10, portY);
+
+          // Cable from port going down and out (messy)
+          ctx.strokeStyle = ai.color + hex(beforeAlpha * 0.25);
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(cx - 20, portY + portR);
+          var endX = cx - 20 + (ai_i - 1) * 25;
+          ctx.bezierCurveTo(cx - 20, portY + 40, endX, cardY + cardH + 15, endX, cardY + cardH + 30);
+          ctx.stroke();
+
+          // Dangling connector end
+          ctx.beginPath();
+          ctx.arc(endX, cardY + cardH + 32, 3, 0, Math.PI * 2);
+          ctx.fillStyle = ai.color + hex(beforeAlpha * 0.5);
+          ctx.fill();
+        }
+      });
+
+      // "After" state: each tool has 1 green MCP port
+      if (t > 0.01) {
+        var afterAlpha = t;
+        var mcpPortY = portStartY + portSpacing;
+
+        // MCP port
+        ctx.beginPath();
+        ctx.arc(cx, mcpPortY, portR + 2, 0, Math.PI * 2);
+        ctx.fillStyle = GREEN + hex(afterAlpha * 0.35);
+        ctx.fill();
+        ctx.strokeStyle = GREEN + hex(afterAlpha);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // MCP label
+        ctx.fillStyle = GREEN + hex(afterAlpha);
+        ctx.font = '600 11px Inter, system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('MCP', cx, mcpPortY + 22);
+
+        // Clean line down to MCP bar
+        ctx.strokeStyle = GREEN + hex(afterAlpha * 0.5);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, mcpPortY + portR + 2);
+        ctx.lineTo(cx, mcpY - 12);
+        ctx.stroke();
+      }
+    });
+
+    // "Before" bottom label
+    var beforeAlpha = 1 - t;
+    if (beforeAlpha > 0.3) {
+      ctx.fillStyle = RED + hex(beforeAlpha * 0.7);
+      ctx.font = '500 11px Inter, system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('Each tool maintains a custom connector for every AI platform', w / 2, cardY + cardH + 46);
+    }
+
+    // "After" MCP bar + AI models
+    if (t > 0.01) {
+      var afterAlpha = t;
+      var pulse = Math.sin(frameCount * 0.04) * 0.1 + 0.9;
+
+      // MCP bar
+      var barW = totalW * 0.85;
+      var barH = 28;
+      var barX = (w - barW) / 2;
+      drawRoundRect(barX, mcpY - barH / 2, barW, barH, barH / 2);
+      ctx.fillStyle = 'rgba(10,10,15,' + (afterAlpha * 0.95) + ')';
+      ctx.fill();
+      drawRoundRect(barX, mcpY - barH / 2, barW, barH, barH / 2);
+      ctx.fillStyle = GREEN + hex(afterAlpha * 0.15);
+      ctx.fill();
+      ctx.strokeStyle = GREEN + hex(afterAlpha * pulse);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = afterAlpha;
+      ctx.font = '700 12px Inter, system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Model Context Protocol', w / 2, mcpY);
+      ctx.globalAlpha = 1;
+
+      // AI model circles below
+      var aiSpacing = totalW / (ais.length + 1);
+      ais.forEach(function (ai, i) {
+        var ax = startX + aiSpacing * (i + 1);
+
+        // Line from MCP bar down to AI
+        ctx.strokeStyle = ai.color + hex(afterAlpha * 0.4);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(ax, mcpY + barH / 2);
+        ctx.lineTo(ax, aiY);
+        ctx.stroke();
+
+        // AI circle
+        ctx.beginPath();
+        ctx.arc(ax, aiY + 16, 18, 0, Math.PI * 2);
+        ctx.fillStyle = ai.color + hex(afterAlpha * 0.15);
+        ctx.fill();
+        ctx.strokeStyle = ai.color + hex(afterAlpha * 0.8);
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.globalAlpha = afterAlpha;
+        ctx.font = '500 11px Inter, system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(ai.label, ax, aiY + 16);
+        ctx.globalAlpha = 1;
+      });
+
+      // "Works with any AI" label
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = afterAlpha * 0.6;
+      ctx.font = '500 10px Inter, system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('Works with any AI model', w / 2, aiY + 44);
       ctx.globalAlpha = 1;
     }
 
-    // Draw nodes
-    pos.devices.forEach(function (n) { drawNode(n, CYAN); });
-    pos.cables.forEach(function (n) { drawNode(n, PURPLE); });
-
-    // Bottom label
-    var beforeCount = devices.length * cables.length;
-    var countLabel = t < 0.5
-      ? beforeCount + ' custom integrations'
-      : cables.length + ' MCP servers \u2014 every AI model connected';
+    // Bottom count
     ctx.fillStyle = '#fff';
     ctx.font = '600 14px Inter, system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText(countLabel, w / 2, h - 16);
-  }
-
-  function drawNode(n, color) {
-    var isHovered = hoveredNode && hoveredNode.label === n.label;
-    var r = isHovered ? 28 : 24;
-    // Filled circle
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-    ctx.fillStyle = color + (isHovered ? '30' : '15');
-    ctx.fill();
-    ctx.strokeStyle = color + (isHovered ? 'ff' : 'aa');
-    ctx.lineWidth = isHovered ? 2.5 : 1.5;
-    ctx.stroke();
-    // Label
-    ctx.fillStyle = '#fff';
-    ctx.font = (isHovered ? '600 12px' : '500 11px') + ' Inter, system-ui';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(n.label, n.x, n.y);
-  }
-
-  function hex(alpha) {
-    var v = Math.round(Math.max(0, Math.min(1, alpha)) * 255);
-    return (v < 16 ? '0' : '') + v.toString(16);
+    var countLabel = t < 0.5
+      ? (tools.length * ais.length) + ' custom connectors to build and maintain'
+      : tools.length + ' MCP servers \u2014 every AI model works automatically';
+    ctx.fillText(countLabel, w / 2, h - 14);
   }
 
   function animateDiagram() {
@@ -399,52 +447,6 @@
       }
     });
   });
-
-  // Hover detection
-  canvas.addEventListener('mousemove', function (e) {
-    var rect = canvas.getBoundingClientRect();
-    var mx = e.clientX - rect.left;
-    var my = e.clientY - rect.top;
-    var w = canvas.width / dpr;
-    var h = canvas.height / dpr;
-    var pos = getNodePositions(w, h);
-    var allNodes = pos.devices.concat(pos.cables);
-    hoveredNode = null;
-    for (var i = 0; i < allNodes.length; i++) {
-      var n = allNodes[i];
-      var dx = mx - n.x; var dy = my - n.y;
-      if (dx * dx + dy * dy < 34 * 34) {
-        hoveredNode = n;
-        canvas.style.cursor = 'pointer';
-        return;
-      }
-    }
-    canvas.style.cursor = 'default';
-  });
-
-  canvas.addEventListener('mouseleave', function () { hoveredNode = null; });
-
-  // Touch support
-  canvas.addEventListener('touchstart', function (e) {
-    var rect = canvas.getBoundingClientRect();
-    var touch = e.touches[0];
-    var mx = touch.clientX - rect.left;
-    var my = touch.clientY - rect.top;
-    var w = canvas.width / dpr;
-    var h = canvas.height / dpr;
-    var pos = getNodePositions(w, h);
-    var allNodes = pos.devices.concat(pos.cables);
-    hoveredNode = null;
-    for (var i = 0; i < allNodes.length; i++) {
-      var n = allNodes[i];
-      var dx = mx - n.x; var dy = my - n.y;
-      if (dx * dx + dy * dy < 44 * 44) { hoveredNode = n; return; }
-    }
-  }, { passive: true });
-
-  canvas.addEventListener('touchend', function () {
-    setTimeout(function () { hoveredNode = null; }, 1500);
-  }, { passive: true });
 
   // Init diagram — with delayed fallback for layout timing
   resizeCanvas();
