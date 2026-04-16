@@ -190,9 +190,9 @@
   var frameCount = 0;
 
   var tools = [
-    { label: 'Splunk' },
-    { label: 'ThousandEyes' },
-    { label: 'ServiceNow' },
+    { label: 'Splunk', icon: '\uD83D\uDD0D' },
+    { label: 'ThousandEyes', icon: '\uD83D\uDC41' },
+    { label: 'ServiceNow', icon: '\uD83C\uDFAB' },
   ];
   var ais = [
     { label: 'Claude', color: CYAN },
@@ -211,12 +211,12 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function hex(alpha) {
-    var v = Math.round(Math.max(0, Math.min(1, alpha)) * 255);
+  function hex(a) {
+    var v = Math.round(Math.max(0, Math.min(1, a)) * 255);
     return (v < 16 ? '0' : '') + v.toString(16);
   }
 
-  function drawRoundRect(x, y, w, h, r) {
+  function rrect(x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.lineTo(x + w - r, y);
@@ -237,192 +237,271 @@
     var t = animProgress;
     frameCount++;
 
-    var compact = w < 500;
-    var cardW = compact ? 100 : 130;
-    var cardH = compact ? 140 : 160;
-    var portR = 6;
-    var gap = compact ? 20 : 40;
+    var sm = w < 500;
+    var cardW = sm ? 110 : 155;
+    var cardH = sm ? 155 : 175;
+    var gap = sm ? 14 : 32;
     var totalW = tools.length * cardW + (tools.length - 1) * gap;
     var startX = (w - totalW) / 2;
-    var cardY = 50;
-    var portSpacing = 30;
-    var portStartY = cardY + 50;
-    var mcpY = cardY + cardH + 60;
-    var aiY = mcpY + 50;
+    var cardY = 28;
+    var slotH = sm ? 24 : 28;
+    var slotW = sm ? 80 : 115;
+    var slotGap = sm ? 6 : 8;
+    var slotStartY = cardY + (sm ? 52 : 58);
+    var zoneBelow = cardY + cardH + 16;
+    var mcpBarY = zoneBelow + (sm ? 35 : 45);
+    var aiRowY = mcpBarY + (sm ? 48 : 55);
 
-    // Draw tool cards
+    // ── TOOL CARDS ──
     tools.forEach(function (tool, ti) {
       var cx = startX + ti * (cardW + gap) + cardW / 2;
-      var cardLeft = cx - cardW / 2;
+      var cl = cx - cardW / 2;
 
-      // Card background
-      drawRoundRect(cardLeft, cardY, cardW, cardH, 10);
-      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      // Card shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.4)';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetY = 4;
+      rrect(cl, cardY, cardW, cardH, 12);
+      ctx.fillStyle = 'rgba(18,18,30,0.95)';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.shadowColor = 'transparent';
+
+      // Card border
+      rrect(cl, cardY, cardW, cardH, 12);
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
       ctx.lineWidth = 1;
       ctx.stroke();
 
+      // Top accent line
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cl + 12, cardY);
+      ctx.lineTo(cl + cardW - 12, cardY);
+      ctx.strokeStyle = PURPLE + '60';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+
       // Tool name
       ctx.fillStyle = '#fff';
-      ctx.font = '600 ' + (compact ? '11' : '13') + 'px Inter, system-ui';
+      ctx.font = '700 ' + (sm ? '12' : '14') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(tool.label, cx, cardY + 24);
+      ctx.fillText(tool.label, cx, cardY + (sm ? 22 : 26));
 
-      // Connector ports
-      ais.forEach(function (ai, ai_i) {
-        var portY = portStartY + ai_i * portSpacing;
+      // Divider
+      ctx.beginPath();
+      ctx.moveTo(cl + 16, slotStartY - 12);
+      ctx.lineTo(cl + cardW - 16, slotStartY - 12);
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
-        // "Before" state: each tool has 3 different colored ports
-        var beforeAlpha = 1 - t;
-        if (beforeAlpha > 0.01) {
-          // Port circle
-          ctx.beginPath();
-          ctx.arc(cx - 20, portY, portR, 0, Math.PI * 2);
-          ctx.fillStyle = ai.color + hex(beforeAlpha * 0.3);
+      // ── BEFORE: 3 connector slots ──
+      var ba = 1 - t;
+      if (ba > 0.01) {
+        ais.forEach(function (ai, j) {
+          var sy = slotStartY + j * (slotH + slotGap);
+          var sx = cx - slotW / 2;
+
+          // Slot background
+          rrect(sx, sy, slotW, slotH, 6);
+          ctx.fillStyle = ai.color + hex(ba * 0.08);
           ctx.fill();
-          ctx.strokeStyle = ai.color + hex(beforeAlpha * 0.8);
-          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = ai.color + hex(ba * 0.4);
+          ctx.lineWidth = 1;
           ctx.stroke();
 
-          // Port label
-          ctx.fillStyle = ai.color + hex(beforeAlpha * 0.9);
-          ctx.font = '500 ' + (compact ? '9' : '10') + 'px Inter, system-ui';
+          // Colored dot
+          ctx.beginPath();
+          ctx.arc(sx + 14, sy + slotH / 2, 4, 0, Math.PI * 2);
+          ctx.fillStyle = ai.color + hex(ba * 0.7);
+          ctx.fill();
+
+          // Label
+          ctx.fillStyle = ai.color + hex(ba * 0.9);
+          ctx.font = '500 ' + (sm ? '9' : '11') + 'px Inter, system-ui';
           ctx.textAlign = 'left';
-          ctx.fillText(ai.label, cx - 10, portY);
+          ctx.textBaseline = 'middle';
+          ctx.fillText(ai.label + ' SDK', sx + 24, sy + slotH / 2);
 
-          // Cable from port going down and out (messy)
-          ctx.strokeStyle = ai.color + hex(beforeAlpha * 0.25);
-          ctx.lineWidth = 1.5;
+          // Cable hanging below card
+          var cableEndX = cx + (j - 1) * (sm ? 18 : 28);
+          var cableEndY = zoneBelow + (sm ? 14 : 18) + j * 5;
+          ctx.strokeStyle = ai.color + hex(ba * 0.3);
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
           ctx.beginPath();
-          ctx.moveTo(cx - 20, portY + portR);
-          var endX = cx - 20 + (ai_i - 1) * 25;
-          ctx.bezierCurveTo(cx - 20, portY + 40, endX, cardY + cardH + 15, endX, cardY + cardH + 30);
+          ctx.moveTo(cx, cardY + cardH);
+          ctx.bezierCurveTo(cx, cardY + cardH + 20, cableEndX, cableEndY - 10, cableEndX, cableEndY);
           ctx.stroke();
+          ctx.setLineDash([]);
 
-          // Dangling connector end
-          ctx.beginPath();
-          ctx.arc(endX, cardY + cardH + 32, 3, 0, Math.PI * 2);
-          ctx.fillStyle = ai.color + hex(beforeAlpha * 0.5);
+          // Dangling plug
+          rrect(cableEndX - 5, cableEndY, 10, 6, 2);
+          ctx.fillStyle = ai.color + hex(ba * 0.5);
           ctx.fill();
-        }
-      });
+        });
+      }
 
-      // "After" state: each tool has 1 green MCP port
+      // ── AFTER: 1 MCP slot ──
       if (t > 0.01) {
-        var afterAlpha = t;
-        var mcpPortY = portStartY + portSpacing;
+        var aa = t;
+        var sy = slotStartY + slotH + slotGap;
+        var sx = cx - slotW / 2;
 
-        // MCP port
-        ctx.beginPath();
-        ctx.arc(cx, mcpPortY, portR + 2, 0, Math.PI * 2);
-        ctx.fillStyle = GREEN + hex(afterAlpha * 0.35);
+        // Slot
+        rrect(sx, sy, slotW, slotH, 6);
+        ctx.fillStyle = GREEN + hex(aa * 0.12);
         ctx.fill();
-        ctx.strokeStyle = GREEN + hex(afterAlpha);
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = GREEN + hex(aa * 0.7);
+        ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // MCP label
-        ctx.fillStyle = GREEN + hex(afterAlpha);
-        ctx.font = '600 11px Inter, system-ui';
-        ctx.textAlign = 'center';
-        ctx.fillText('MCP', cx, mcpPortY + 22);
+        // Green dot
+        ctx.beginPath();
+        ctx.arc(sx + 14, sy + slotH / 2, 5, 0, Math.PI * 2);
+        ctx.fillStyle = GREEN + hex(aa * 0.8);
+        ctx.fill();
 
-        // Clean line down to MCP bar
-        ctx.strokeStyle = GREEN + hex(afterAlpha * 0.5);
+        // Label
+        ctx.fillStyle = GREEN + hex(aa);
+        ctx.font = '600 ' + (sm ? '10' : '12') + 'px Inter, system-ui';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('MCP', sx + 24, sy + slotH / 2);
+
+        // Clean line to MCP bar
+        ctx.strokeStyle = GREEN + hex(aa * 0.45);
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(cx, mcpPortY + portR + 2);
-        ctx.lineTo(cx, mcpY - 12);
+        ctx.moveTo(cx, cardY + cardH);
+        ctx.lineTo(cx, mcpBarY - 6);
         ctx.stroke();
+
+        // Animated flow dot
+        var dotPos = ((frameCount * 0.012 + ti * 0.33) % 1);
+        var dotY = cardY + cardH + dotPos * (mcpBarY - 6 - cardY - cardH);
+        ctx.beginPath();
+        ctx.arc(cx, dotY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = GREEN + hex(aa * 0.8);
+        ctx.fill();
       }
     });
 
-    // "Before" bottom label
-    var beforeAlpha = 1 - t;
-    if (beforeAlpha > 0.3) {
-      ctx.fillStyle = RED + hex(beforeAlpha * 0.7);
-      ctx.font = '500 11px Inter, system-ui';
+    // ── BEFORE: messy label ──
+    if ((1 - t) > 0.2) {
+      ctx.fillStyle = 'rgba(255,255,255,' + ((1 - t) * 0.5) + ')';
+      ctx.font = '500 ' + (sm ? '10' : '12') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText('Each tool maintains a custom connector for every AI platform', w / 2, cardY + cardH + 46);
+      ctx.fillText('Each tool builds and maintains a custom connector per AI', w / 2, zoneBelow + (sm ? 30 : 38));
     }
 
-    // "After" MCP bar + AI models
+    // ── AFTER: MCP BAR + AI MODELS ──
     if (t > 0.01) {
-      var afterAlpha = t;
-      var pulse = Math.sin(frameCount * 0.04) * 0.1 + 0.9;
-
-      // MCP bar
-      var barW = totalW * 0.85;
-      var barH = 28;
+      var aa = t;
+      var pulse = Math.sin(frameCount * 0.03) * 0.12 + 0.88;
+      var barW = totalW + 20;
+      var barH = sm ? 32 : 36;
       var barX = (w - barW) / 2;
-      drawRoundRect(barX, mcpY - barH / 2, barW, barH, barH / 2);
-      ctx.fillStyle = 'rgba(10,10,15,' + (afterAlpha * 0.95) + ')';
+
+      // Bar glow
+      ctx.shadowColor = GREEN + hex(aa * 0.3);
+      ctx.shadowBlur = 25;
+      rrect(barX, mcpBarY - barH / 2, barW, barH, barH / 2);
+      ctx.fillStyle = 'rgba(10,10,18,' + (aa * 0.97) + ')';
       ctx.fill();
-      drawRoundRect(barX, mcpY - barH / 2, barW, barH, barH / 2);
-      ctx.fillStyle = GREEN + hex(afterAlpha * 0.15);
+      ctx.shadowColor = 'transparent';
+
+      // Bar fill + border
+      rrect(barX, mcpBarY - barH / 2, barW, barH, barH / 2);
+      ctx.fillStyle = GREEN + hex(aa * 0.1);
       ctx.fill();
-      ctx.strokeStyle = GREEN + hex(afterAlpha * pulse);
+      ctx.strokeStyle = GREEN + hex(aa * pulse);
       ctx.lineWidth = 2;
       ctx.stroke();
 
+      // Bar label
       ctx.fillStyle = '#fff';
-      ctx.globalAlpha = afterAlpha;
-      ctx.font = '700 12px Inter, system-ui';
+      ctx.globalAlpha = aa;
+      ctx.font = '700 ' + (sm ? '11' : '13') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('Model Context Protocol', w / 2, mcpY);
+      ctx.fillText('MCP', w / 2, mcpBarY);
       ctx.globalAlpha = 1;
 
-      // AI model circles below
-      var aiSpacing = totalW / (ais.length + 1);
+      // AI model pills
+      var aiTotalW = 0;
+      var pillH = sm ? 30 : 34;
+      var pillGap = sm ? 10 : 16;
+      var pillWidths = ais.map(function (ai) { return sm ? 65 : 85; });
+      pillWidths.forEach(function (pw) { aiTotalW += pw; });
+      aiTotalW += (ais.length - 1) * pillGap;
+      var aiStartX = (w - aiTotalW) / 2;
+
       ais.forEach(function (ai, i) {
-        var ax = startX + aiSpacing * (i + 1);
+        var pw = pillWidths[i];
+        var px = aiStartX;
+        for (var k = 0; k < i; k++) px += pillWidths[k] + pillGap;
+        var pcx = px + pw / 2;
 
-        // Line from MCP bar down to AI
-        ctx.strokeStyle = ai.color + hex(afterAlpha * 0.4);
+        // Line from bar to pill
+        ctx.strokeStyle = ai.color + hex(aa * 0.35);
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(ax, mcpY + barH / 2);
-        ctx.lineTo(ax, aiY);
+        ctx.moveTo(pcx, mcpBarY + barH / 2);
+        ctx.lineTo(pcx, aiRowY);
         ctx.stroke();
 
-        // AI circle
+        // Flow dot
+        var dp = ((frameCount * 0.015 + i * 0.33) % 1);
+        var dy = mcpBarY + barH / 2 + dp * (aiRowY - mcpBarY - barH / 2);
         ctx.beginPath();
-        ctx.arc(ax, aiY + 16, 18, 0, Math.PI * 2);
-        ctx.fillStyle = ai.color + hex(afterAlpha * 0.15);
+        ctx.arc(pcx, dy, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = ai.color + hex(aa * 0.7);
         ctx.fill();
-        ctx.strokeStyle = ai.color + hex(afterAlpha * 0.8);
+
+        // Pill shadow
+        ctx.shadowColor = ai.color + hex(aa * 0.15);
+        ctx.shadowBlur = 12;
+        rrect(px, aiRowY, pw, pillH, pillH / 2);
+        ctx.fillStyle = 'rgba(15,15,25,' + (aa * 0.95) + ')';
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+
+        // Pill border + fill
+        rrect(px, aiRowY, pw, pillH, pillH / 2);
+        ctx.fillStyle = ai.color + hex(aa * 0.1);
+        ctx.fill();
+        ctx.strokeStyle = ai.color + hex(aa * 0.6);
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
+        // Label
         ctx.fillStyle = '#fff';
-        ctx.globalAlpha = afterAlpha;
-        ctx.font = '500 11px Inter, system-ui';
+        ctx.globalAlpha = aa;
+        ctx.font = '600 ' + (sm ? '10' : '12') + 'px Inter, system-ui';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(ai.label, ax, aiY + 16);
+        ctx.fillText(ai.label, pcx, aiRowY + pillH / 2);
         ctx.globalAlpha = 1;
       });
 
-      // "Works with any AI" label
-      ctx.fillStyle = '#fff';
-      ctx.globalAlpha = afterAlpha * 0.6;
-      ctx.font = '500 10px Inter, system-ui';
+      // Subtitle
+      ctx.fillStyle = 'rgba(255,255,255,' + (aa * 0.45) + ')';
+      ctx.font = '500 ' + (sm ? '9' : '11') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText('Works with any AI model', w / 2, aiY + 44);
-      ctx.globalAlpha = 1;
+      ctx.fillText('Any AI model connects instantly', w / 2, aiRowY + pillH + (sm ? 14 : 18));
     }
 
-    // Bottom count
+    // ── BOTTOM LABEL ──
     ctx.fillStyle = '#fff';
-    ctx.font = '600 14px Inter, system-ui';
+    ctx.font = '600 ' + (sm ? '12' : '14') + 'px Inter, system-ui';
     ctx.textAlign = 'center';
-    var countLabel = t < 0.5
-      ? (tools.length * ais.length) + ' custom connectors to build and maintain'
+    var label = t < 0.5
+      ? (tools.length * ais.length) + ' custom integrations to build & maintain'
       : tools.length + ' MCP servers \u2014 every AI model works automatically';
-    ctx.fillText(countLabel, w / 2, h - 14);
+    ctx.fillText(label, w / 2, h - (sm ? 10 : 14));
   }
 
   function animateDiagram() {
@@ -434,7 +513,6 @@
     requestAnimationFrame(animateDiagram);
   }
 
-  // Toggle buttons
   $$('.diagram-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       $$('.diagram-btn').forEach(function (b) { b.classList.remove('active', 'active-red'); });
@@ -448,7 +526,6 @@
     });
   });
 
-  // Init diagram — with delayed fallback for layout timing
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
   setTimeout(resizeCanvas, 150);
