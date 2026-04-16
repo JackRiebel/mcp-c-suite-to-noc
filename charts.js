@@ -303,21 +303,30 @@
 
     // ── AFTER: lines through MCP bar ──
     if (aa > 0.01) {
-      // MCP bar
+      // MCP bar — spans from top-most node to bottom-most node
       var barW = sm ? 36 : 48;
-      var barH = h - aiTopPad * 2 - 10;
+      var topNode = Math.min(aiYs[0], toolYs[0]);
+      var botNode = Math.max(aiYs[aiYs.length - 1] + boxH, toolYs[toolYs.length - 1] + boxH);
+      var barY = topNode - 4;
+      var barH = botNode - topNode + 8;
       var barX = midX - barW / 2;
-      var barY = aiTopPad - 5;
       var pulse = Math.sin(frameCount * 0.03) * 0.1 + 0.9;
+
+      // Hover logic: if ANY node is hovered, ALL lines on BOTH sides
+      // stay lit — because that's the point of MCP. One tool connects
+      // to every AI model. One AI model connects to every tool.
+      var isAnyHovered = !!hovLabel;
+      var hovIsAI = isAnyHovered && aiModels.some(function(a) { return a.label === hovLabel; });
+      var hovIsTool = isAnyHovered && entTools.some(function(t) { return t.label === hovLabel; });
 
       // Lines from AI to bar
       aiModels.forEach(function (ai, i) {
         var ay = aiYs[i] + boxH / 2;
-        var alpha = 0.45 * aa;
-        if (hovLabel && hovLabel !== ai.label) {
-          var isToolHovered = entTools.some(function(t) { return t.label === hovLabel; });
-          if (!isToolHovered) alpha = 0.12 * aa;
-        }
+        var alpha = 0.5 * aa;
+        // Dim only if an AI is hovered and it's not this one
+        if (hovIsAI && hovLabel !== ai.label) alpha = 0.12 * aa;
+        // If a tool is hovered, keep ALL AI lines bright
+        if (hovIsTool) alpha = 0.65 * aa;
         ctx.strokeStyle = CYAN + hex(alpha);
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -330,18 +339,18 @@
         var dx = leftX + boxW + dp * (barX - leftX - boxW);
         ctx.beginPath();
         ctx.arc(dx, ay, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = CYAN + hex(aa * 0.7);
+        ctx.fillStyle = CYAN + hex(alpha);
         ctx.fill();
       });
 
       // Lines from bar to tools
       entTools.forEach(function (tool, j) {
         var ty = toolYs[j] + boxH / 2;
-        var alpha = 0.45 * aa;
-        if (hovLabel && hovLabel !== tool.label) {
-          var isAIHovered = aiModels.some(function(a) { return a.label === hovLabel; });
-          if (!isAIHovered) alpha = 0.12 * aa;
-        }
+        var alpha = 0.5 * aa;
+        // Dim only if a tool is hovered and it's not this one
+        if (hovIsTool && hovLabel !== tool.label) alpha = 0.12 * aa;
+        // If an AI is hovered, keep ALL tool lines bright
+        if (hovIsAI) alpha = 0.65 * aa;
         ctx.strokeStyle = PURPLE + hex(alpha);
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -354,7 +363,7 @@
         var dx = barX + barW + dp * (rightX - barX - barW);
         ctx.beginPath();
         ctx.arc(dx, ty, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = PURPLE + hex(aa * 0.7);
+        ctx.fillStyle = PURPLE + hex(alpha);
         ctx.fill();
       });
 
@@ -387,18 +396,25 @@
       ctx.restore();
     }
 
+    // Determine hover context for box styling
+    var hovIsAIBox = hovLabel && aiModels.some(function(a) { return a.label === hovLabel; });
+    var hovIsToolBox = hovLabel && entTools.some(function(t) { return t.label === hovLabel; });
+
     // ── LEFT COLUMN: AI model boxes ──
     aiModels.forEach(function (ai, i) {
       var y = aiYs[i];
-      var isHov = hovLabel === ai.label;
+      var isThis = hovLabel === ai.label;
+      // Bright if: this is hovered, OR a tool is hovered (all AIs stay lit), OR nothing hovered
+      var bright = isThis || hovIsToolBox || !hovLabel;
+      var dimmed = hovLabel && !bright;
       rrect(leftX, y, boxW, boxH, 7);
-      ctx.fillStyle = isHov ? 'rgba(34,211,238,0.12)' : 'rgba(20,20,32,0.95)';
+      ctx.fillStyle = isThis ? 'rgba(34,211,238,0.12)' : 'rgba(20,20,32,0.95)';
       ctx.fill();
-      ctx.strokeStyle = isHov ? CYAN + 'cc' : CYAN + '44';
-      ctx.lineWidth = isHov ? 2 : 1;
+      ctx.strokeStyle = dimmed ? CYAN + '22' : (isThis ? CYAN + 'dd' : CYAN + '55');
+      ctx.lineWidth = isThis ? 2 : 1;
       ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.font = (isHov ? '700 ' : '500 ') + (sm ? '11' : '13') + 'px Inter, system-ui';
+      ctx.fillStyle = dimmed ? 'rgba(255,255,255,0.3)' : '#fff';
+      ctx.font = (isThis ? '700 ' : '500 ') + (sm ? '11' : '13') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(ai.label, leftX + boxW / 2, y + boxH / 2);
@@ -407,15 +423,18 @@
     // ── RIGHT COLUMN: tool boxes ──
     entTools.forEach(function (tool, j) {
       var y = toolYs[j];
-      var isHov = hovLabel === tool.label;
+      var isThis = hovLabel === tool.label;
+      // Bright if: this is hovered, OR an AI is hovered (all tools stay lit), OR nothing hovered
+      var bright = isThis || hovIsAIBox || !hovLabel;
+      var dimmed = hovLabel && !bright;
       rrect(rightX, y, boxW, boxH, 7);
-      ctx.fillStyle = isHov ? 'rgba(167,139,250,0.12)' : 'rgba(20,20,32,0.95)';
+      ctx.fillStyle = isThis ? 'rgba(167,139,250,0.12)' : 'rgba(20,20,32,0.95)';
       ctx.fill();
-      ctx.strokeStyle = isHov ? PURPLE + 'cc' : PURPLE + '44';
-      ctx.lineWidth = isHov ? 2 : 1;
+      ctx.strokeStyle = dimmed ? PURPLE + '22' : (isThis ? PURPLE + 'dd' : PURPLE + '55');
+      ctx.lineWidth = isThis ? 2 : 1;
       ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.font = (isHov ? '700 ' : '500 ') + (sm ? '10' : '13') + 'px Inter, system-ui';
+      ctx.fillStyle = dimmed ? 'rgba(255,255,255,0.3)' : '#fff';
+      ctx.font = (isThis ? '700 ' : '500 ') + (sm ? '10' : '13') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(tool.label, rightX + boxW / 2, y + boxH / 2);
