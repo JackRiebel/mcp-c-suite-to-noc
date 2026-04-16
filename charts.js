@@ -286,40 +286,42 @@
     var hovLabel = hoveredNode ? hoveredNode.label : null;
 
     // ── BEFORE: spaghetti lines ──
+    // Each line is colored by the AI it connects to, because without MCP
+    // every line is a custom integration built specifically for that AI.
+    // A single tool has 5 differently colored lines leaving it — one per AI.
     if (ba > 0.01) {
       aiModels.forEach(function (ai, i) {
         var ay = aiYs[i] + boxH / 2;
         entTools.forEach(function (tool, j) {
           var ty = toolYs[j] + boxH / 2;
           var highlighted = hovLabel && (hovLabel === ai.label || hovLabel === tool.label);
-          var alpha = 0.22 * ba;
-          if (hovLabel) alpha = highlighted ? 0.85 * ba : 0.05 * ba;
+          var alpha = 0.25 * ba;
+          if (hovLabel) alpha = highlighted ? 0.9 * ba : 0.05 * ba;
 
-          // Bezier points: from AI-right to tool-left
-          // P0 = AI (right edge), P3 = tool (left edge)
+          // Bezier points: AI-right → tool-left
           var p0x = leftX + boxW, p0y = ay;
           var p3x = rightX,       p3y = ty;
           var cp = (p3x - p0x) * 0.4;
           var p1x = p0x + cp,     p1y = p0y;
           var p2x = p3x - cp,     p2y = p3y;
 
-          ctx.strokeStyle = tool.color + hex(alpha);
+          // Line colored by AI — each AI has its own custom integration
+          ctx.strokeStyle = ai.color + hex(alpha);
           ctx.lineWidth = highlighted ? 1.8 : 1.2;
           ctx.beginPath();
           ctx.moveTo(p0x, p0y);
           ctx.bezierCurveTo(p1x, p1y, p2x, p2y, p3x, p3y);
           ctx.stroke();
 
-          // Animated flow dot on hover — travels from tool (t=1) toward AI (t=0)
-          // Dot is tool's color (data leaves tool in its own proprietary format)
+          // Animated flow dot on hover — AI's color (this is the AI's custom path)
           if (highlighted) {
             var raw = ((frameCount * 0.011 + j * 0.19 + i * 0.07) % 1);
-            var dotT = 1 - raw; // reverse: tool → AI
+            var dotT = 1 - raw; // tool → AI
             var dx = bez(dotT, p0x, p1x, p2x, p3x);
             var dy = bez(dotT, p0y, p1y, p2y, p3y);
             ctx.beginPath();
             ctx.arc(dx, dy, 3, 0, Math.PI * 2);
-            ctx.fillStyle = tool.color + hex(ba * 0.95);
+            ctx.fillStyle = ai.color + hex(ba * 0.95);
             ctx.fill();
           }
         });
