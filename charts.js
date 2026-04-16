@@ -197,12 +197,12 @@
     { label: 'Mistral' },
   ];
   var entTools = [
-    { label: 'Splunk' },
-    { label: 'ThousandEyes' },
-    { label: 'ServiceNow' },
-    { label: 'XDR' },
-    { label: 'Duo' },
-    { label: 'Webex' },
+    { label: 'Splunk',       color: '#fb923c' }, // orange
+    { label: 'ThousandEyes', color: '#a78bfa' }, // purple
+    { label: 'ServiceNow',   color: '#60a5fa' }, // blue
+    { label: 'XDR',          color: '#fbbf24' }, // yellow
+    { label: 'Duo',          color: '#f472b6' }, // pink
+    { label: 'Webex',        color: '#f87171' }, // red
   ];
 
   function resizeCanvas() {
@@ -219,6 +219,12 @@
   function hex(a) {
     var v = Math.round(Math.max(0, Math.min(1, a)) * 255);
     return (v < 16 ? '0' : '') + v.toString(16);
+  }
+
+  // Cubic bezier point at parameter tt (0-1)
+  function bez(tt, p0, p1, p2, p3) {
+    var u = 1 - tt;
+    return u * u * u * p0 + 3 * u * u * tt * p1 + 3 * u * tt * tt * p2 + tt * tt * tt * p3;
   }
 
   function rrect(x, y, w, h, r) {
@@ -285,12 +291,12 @@
         var ay = aiYs[i] + boxH / 2;
         entTools.forEach(function (tool, j) {
           var ty = toolYs[j] + boxH / 2;
-          var alpha = 0.18 * ba;
+          var alpha = 0.22 * ba;
           if (hovLabel) {
             alpha = (hovLabel === ai.label || hovLabel === tool.label)
-              ? 0.6 * ba : 0.04 * ba;
+              ? 0.7 * ba : 0.05 * ba;
           }
-          ctx.strokeStyle = RED + hex(alpha);
+          ctx.strokeStyle = tool.color + hex(alpha);
           ctx.lineWidth = 1.2;
           ctx.beginPath();
           ctx.moveTo(leftX + boxW, ay);
@@ -325,59 +331,74 @@
         rotatingToolIdx = Math.floor(frameCount / cyclePeriod) % entTools.length;
       }
 
-      // Lines from AI to hub (curved into the bubble)
-      aiModels.forEach(function (ai, i) {
-        var ay = aiYs[i] + boxH / 2;
-        var alpha = 0.5 * aa;
-        if (hovIsAI && hovLabel !== ai.label) alpha = 0.12 * aa;
-        if (hovIsAI && hovLabel === ai.label) alpha = 0.9 * aa;
-        if (hovIsTool) alpha = 0.65 * aa;
-        ctx.strokeStyle = CYAN + hex(alpha);
-        ctx.lineWidth = 2;
-        var sx = leftX + boxW;
-        var ex = midX - hubR;
-        var cp = (ex - sx) * 0.55;
-        ctx.beginPath();
-        ctx.moveTo(sx, ay);
-        ctx.bezierCurveTo(sx + cp, ay, ex - cp * 0.5, hubY, ex, hubY);
-        ctx.stroke();
-
-        // Flow dot along curve
-        var dp = ((frameCount * 0.01 + i * 0.2) % 1);
-        var dotX = sx + dp * (ex - sx);
-        var dotY = ay + (hubY - ay) * (dp * dp); // ease into hub
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = CYAN + hex(alpha);
-        ctx.fill();
-      });
-
-      // Lines from hub to tools (curved out of the bubble)
+      // ── TOOL → HUB LINES (right side) ──
+      // Each line colored in its tool's color. Dot flows FROM tool TO hub
+      // in the tool's color (showing raw tool data entering MCP).
       entTools.forEach(function (tool, j) {
         var ty = toolYs[j] + boxH / 2;
         var alpha = 0.5 * aa;
         if (hovIsTool && hovLabel !== tool.label) alpha = 0.12 * aa;
-        if (hovIsTool && hovLabel === tool.label) alpha = 0.9 * aa;
+        if (hovIsTool && hovLabel === tool.label) alpha = 0.95 * aa;
         if (hovIsAI) {
-          alpha = (j === rotatingToolIdx) ? 0.9 * aa : 0.12 * aa;
+          alpha = (j === rotatingToolIdx) ? 0.95 * aa : 0.12 * aa;
         }
-        ctx.strokeStyle = PURPLE + hex(alpha);
+
+        // Bezier points: P0=hub-right, P1, P2, P3=tool-left
+        var p0x = midX + hubR, p0y = hubY;
+        var p3x = rightX,       p3y = ty;
+        var cp = (p3x - p0x) * 0.55;
+        var p1x = p0x + cp * 0.5, p1y = p0y;
+        var p2x = p3x - cp,       p2y = p3y;
+
+        ctx.strokeStyle = tool.color + hex(alpha);
         ctx.lineWidth = 2;
-        var sx = midX + hubR;
-        var ex = rightX;
-        var cp = (ex - sx) * 0.55;
         ctx.beginPath();
-        ctx.moveTo(sx, hubY);
-        ctx.bezierCurveTo(sx + cp * 0.5, hubY, ex - cp, ty, ex, ty);
+        ctx.moveTo(p0x, p0y);
+        ctx.bezierCurveTo(p1x, p1y, p2x, p2y, p3x, p3y);
         ctx.stroke();
 
-        // Flow dot along curve
-        var dp = ((frameCount * 0.01 + j * 0.17) % 1);
-        var dotX = sx + dp * (ex - sx);
-        var dotY = hubY + (ty - hubY) * (1 - (1 - dp) * (1 - dp));
+        // Flow dot: travels from tool (t=1) toward hub (t=0)
+        var raw = ((frameCount * 0.01 + j * 0.17) % 1);
+        var dotT = 1 - raw; // reverse direction
+        var dotX = bez(dotT, p0x, p1x, p2x, p3x);
+        var dotY = bez(dotT, p0y, p1y, p2y, p3y);
         ctx.beginPath();
-        ctx.arc(dotX, dotY, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = PURPLE + hex(alpha);
+        ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = tool.color + hex(alpha);
+        ctx.fill();
+      });
+
+      // ── HUB → AI LINES (left side) ──
+      // Lines in neutral cyan. Dot flows FROM hub TO AI in GREEN
+      // (showing standardized MCP output reaching every AI model).
+      aiModels.forEach(function (ai, i) {
+        var ay = aiYs[i] + boxH / 2;
+        var alpha = 0.5 * aa;
+        if (hovIsAI && hovLabel !== ai.label) alpha = 0.12 * aa;
+        if (hovIsAI && hovLabel === ai.label) alpha = 0.95 * aa;
+        if (hovIsTool) alpha = 0.7 * aa;
+
+        // Bezier points: P0=hub-left, P1, P2, P3=AI-right
+        var p0x = midX - hubR, p0y = hubY;
+        var p3x = leftX + boxW, p3y = ay;
+        var cp = (p0x - p3x) * 0.55;
+        var p1x = p0x - cp * 0.5, p1y = p0y;
+        var p2x = p3x + cp,       p2y = p3y;
+
+        ctx.strokeStyle = CYAN + hex(alpha);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(p0x, p0y);
+        ctx.bezierCurveTo(p1x, p1y, p2x, p2y, p3x, p3y);
+        ctx.stroke();
+
+        // Flow dot in GREEN: travels from hub (t=0) to AI (t=1)
+        var dotT = ((frameCount * 0.01 + i * 0.2) % 1);
+        var dotX = bez(dotT, p0x, p1x, p2x, p3x);
+        var dotY = bez(dotT, p0y, p1y, p2y, p3y);
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = GREEN + hex(alpha);
         ctx.fill();
       });
 
@@ -444,22 +465,23 @@
       ctx.fillText(ai.label, leftX + boxW / 2, y + boxH / 2);
     });
 
-    // ── RIGHT COLUMN: tool boxes ──
+    // ── RIGHT COLUMN: tool boxes (each in its own color) ──
     entTools.forEach(function (tool, j) {
       var y = toolYs[j];
       var isThis = hovLabel === tool.label;
-      // Bright if: this is hovered, OR (AI hovered AND this is the rotating tool), OR nothing hovered
       var bright;
       if (isThis) bright = true;
       else if (hovIsAIBox) bright = (j === rotTool);
-      else if (hovIsToolBox) bright = false; // another tool is hovered
+      else if (hovIsToolBox) bright = false;
       else bright = true;
       var dimmed = hovLabel && !bright;
       var isRot = hovIsAIBox && j === rotTool;
+      var tc = tool.color;
+
       rrect(rightX, y, boxW, boxH, 7);
-      ctx.fillStyle = isThis ? 'rgba(167,139,250,0.12)' : (isRot ? 'rgba(167,139,250,0.08)' : 'rgba(20,20,32,0.95)');
+      ctx.fillStyle = isThis ? tc + '1f' : (isRot ? tc + '14' : 'rgba(20,20,32,0.95)');
       ctx.fill();
-      ctx.strokeStyle = dimmed ? PURPLE + '22' : ((isThis || isRot) ? PURPLE + 'dd' : PURPLE + '55');
+      ctx.strokeStyle = dimmed ? tc + '22' : ((isThis || isRot) ? tc + 'dd' : tc + '66');
       ctx.lineWidth = (isThis || isRot) ? 2 : 1;
       ctx.stroke();
       ctx.fillStyle = dimmed ? 'rgba(255,255,255,0.3)' : '#fff';
