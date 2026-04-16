@@ -190,11 +190,11 @@
   var frameCount = 0;
 
   var aiModels = [
-    { label: 'Claude' },
-    { label: 'GPT' },
-    { label: 'Gemini' },
-    { label: 'Llama' },
-    { label: 'Mistral' },
+    { label: 'Claude',  color: '#22d3ee' }, // cyan
+    { label: 'GPT',     color: '#14b8a6' }, // teal
+    { label: 'Gemini',  color: '#818cf8' }, // indigo
+    { label: 'Llama',   color: '#c084fc' }, // violet
+    { label: 'Mistral', color: '#2dd4bf' }, // mint
   ];
   var entTools = [
     { label: 'Splunk',       color: '#fb923c' }, // orange
@@ -291,18 +291,37 @@
         var ay = aiYs[i] + boxH / 2;
         entTools.forEach(function (tool, j) {
           var ty = toolYs[j] + boxH / 2;
+          var highlighted = hovLabel && (hovLabel === ai.label || hovLabel === tool.label);
           var alpha = 0.22 * ba;
-          if (hovLabel) {
-            alpha = (hovLabel === ai.label || hovLabel === tool.label)
-              ? 0.7 * ba : 0.05 * ba;
-          }
+          if (hovLabel) alpha = highlighted ? 0.85 * ba : 0.05 * ba;
+
+          // Bezier points: from AI-right to tool-left
+          // P0 = AI (right edge), P3 = tool (left edge)
+          var p0x = leftX + boxW, p0y = ay;
+          var p3x = rightX,       p3y = ty;
+          var cp = (p3x - p0x) * 0.4;
+          var p1x = p0x + cp,     p1y = p0y;
+          var p2x = p3x - cp,     p2y = p3y;
+
           ctx.strokeStyle = tool.color + hex(alpha);
-          ctx.lineWidth = 1.2;
+          ctx.lineWidth = highlighted ? 1.8 : 1.2;
           ctx.beginPath();
-          ctx.moveTo(leftX + boxW, ay);
-          var cp = (rightX - leftX - boxW) * 0.4;
-          ctx.bezierCurveTo(leftX + boxW + cp, ay, rightX - cp, ty, rightX, ty);
+          ctx.moveTo(p0x, p0y);
+          ctx.bezierCurveTo(p1x, p1y, p2x, p2y, p3x, p3y);
           ctx.stroke();
+
+          // Animated flow dot on hover — travels from tool (t=1) toward AI (t=0)
+          // Dot is tool's color (data leaves tool in its own proprietary format)
+          if (highlighted) {
+            var raw = ((frameCount * 0.011 + j * 0.19 + i * 0.07) % 1);
+            var dotT = 1 - raw; // reverse: tool → AI
+            var dx = bez(dotT, p0x, p1x, p2x, p3x);
+            var dy = bez(dotT, p0y, p1y, p2y, p3y);
+            ctx.beginPath();
+            ctx.arc(dx, dy, 3, 0, Math.PI * 2);
+            ctx.fillStyle = tool.color + hex(ba * 0.95);
+            ctx.fill();
+          }
         });
       });
     }
@@ -445,17 +464,18 @@
       rotTool = Math.floor(frameCount / 60) % entTools.length;
     }
 
-    // ── LEFT COLUMN: AI model boxes ──
+    // ── LEFT COLUMN: AI model boxes (each in its own color) ──
     aiModels.forEach(function (ai, i) {
       var y = aiYs[i];
       var isThis = hovLabel === ai.label;
-      // Bright if: this is hovered, OR a tool is hovered (all AIs stay lit), OR nothing hovered
       var bright = isThis || hovIsToolBox || !hovLabel;
       var dimmed = hovLabel && !bright;
+      var ac = ai.color;
+
       rrect(leftX, y, boxW, boxH, 7);
-      ctx.fillStyle = isThis ? 'rgba(34,211,238,0.12)' : 'rgba(20,20,32,0.95)';
+      ctx.fillStyle = isThis ? ac + '1f' : 'rgba(20,20,32,0.95)';
       ctx.fill();
-      ctx.strokeStyle = dimmed ? CYAN + '22' : (isThis ? CYAN + 'dd' : CYAN + '55');
+      ctx.strokeStyle = dimmed ? ac + '22' : (isThis ? ac + 'dd' : ac + '66');
       ctx.lineWidth = isThis ? 2 : 1;
       ctx.stroke();
       ctx.fillStyle = dimmed ? 'rgba(255,255,255,0.3)' : '#fff';
@@ -491,14 +511,19 @@
       ctx.fillText(tool.label, rightX + boxW / 2, y + boxH / 2);
     });
 
-    // ── HOVER HINT (only in "after" view, when nothing is hovered) ──
-    if (aa > 0.5 && !hovLabel) {
+    // ── HOVER HINT ──
+    if (!hovLabel) {
       var hintPulse = Math.sin(frameCount * 0.04) * 0.3 + 0.7;
-      ctx.fillStyle = GREEN + hex(aa * 0.9 * hintPulse);
       ctx.font = '600 ' + (sm ? '10' : '12') + 'px Inter, system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('\u2190  Hover any AI or tool to see how MCP connects them  \u2192', w / 2, h - (sm ? 28 : 36));
+      if (aa > 0.5) {
+        ctx.fillStyle = GREEN + hex(aa * 0.9 * hintPulse);
+        ctx.fillText('\u2190  Hover any AI or tool to see how MCP connects them  \u2192', w / 2, h - (sm ? 28 : 36));
+      } else if (ba > 0.5) {
+        ctx.fillStyle = 'rgba(248,113,113,' + (ba * 0.8 * hintPulse) + ')';
+        ctx.fillText('\u2190  Hover any AI or tool to see the integration chaos  \u2192', w / 2, h - (sm ? 28 : 36));
+      }
     }
 
     // ── BOTTOM LABEL ──
