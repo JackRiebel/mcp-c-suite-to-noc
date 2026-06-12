@@ -93,10 +93,16 @@
 
   const aiReadinessCanvas = $('#aiReadinessChart');
   if (hasChart && aiReadinessCanvas) {
+    const readinessLabelMap = {
+      'Networks fully ready for AI': ['Networks fully', 'ready for AI'],
+      'Pacesetter networks ready': ['Pacesetter networks', 'ready'],
+      'Planning AI agents': ['Planning', 'AI agents'],
+    };
+
     new Chart(aiReadinessCanvas, {
       type: 'bar',
       data: {
-        labels: LIVE26_READINESS.map(function (d) { return d.label; }),
+        labels: LIVE26_READINESS.map(function (d) { return readinessLabelMap[d.label] || d.label; }),
         datasets: [{
           data: LIVE26_READINESS.map(function (d) { return d.pct; }),
           backgroundColor: LIVE26_READINESS.map(function (d) { return d.color; }),
@@ -107,6 +113,10 @@
       options: {
         indexAxis: 'y',
         responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { left: 10, right: 14, top: 6, bottom: 0 },
+        },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: function (ctx) { return ctx.parsed.x + '%'; } } },
@@ -118,7 +128,15 @@
             ticks: { callback: function (v) { return v + '%'; } },
             grid: { color: 'rgba(255,255,255,0.04)' },
           },
-          y: { grid: { display: false } },
+          y: {
+            grid: { display: false },
+            ticks: {
+              autoSkip: false,
+              crossAlign: 'far',
+              font: { size: 11, lineHeight: 1.25 },
+              padding: 10,
+            },
+          },
         },
       },
     });

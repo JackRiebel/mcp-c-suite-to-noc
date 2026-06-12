@@ -1631,6 +1631,10 @@ footer {
   max-height: 280px;
 }
 
+.live26-page #aiReadinessChart {
+  min-height: 260px;
+}
+
 .live26-page .chart-card.wide {
   min-height: auto;
 }
