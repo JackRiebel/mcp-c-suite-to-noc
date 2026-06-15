@@ -109,12 +109,64 @@
     return button;
   }
 
+  function createSiteLink(href, text, active) {
+    const link = document.createElement('a');
+    link.href = href;
+    link.textContent = text;
+    if (active) link.className = 'active';
+    return link;
+  }
+
+  function mountArticleTopbar() {
+    if (!document.body || !document.body.classList.contains('article-page')) return;
+    if (document.querySelector('.article-site-topbar')) return;
+
+    const topbar = document.createElement('nav');
+    topbar.className = 'article-site-topbar';
+    topbar.setAttribute('aria-label', 'Primary');
+
+    const mark = document.createElement('a');
+    mark.className = 'site-mark';
+    mark.href = 'index.html';
+    mark.setAttribute('aria-label', 'Jack Riebel home');
+    mark.innerHTML = '<span>JR</span><strong>Jack Riebel</strong>';
+
+    const nav = document.createElement('div');
+    nav.className = 'site-nav';
+    nav.appendChild(createSiteLink('index.html', 'About', false));
+    nav.appendChild(createSiteLink('blogs.html', 'Blogs', true));
+    nav.appendChild(createSiteLink('repos.html', 'Repos', false));
+    nav.appendChild(createSiteLink('connect.html', 'Connect', false));
+
+    const github = document.createElement('a');
+    github.className = 'site-ghost-btn';
+    github.href = 'https://github.com/JackRiebel';
+    github.target = '_blank';
+    github.rel = 'noreferrer';
+    github.textContent = 'GitHub';
+
+    topbar.appendChild(mark);
+    topbar.appendChild(nav);
+    topbar.appendChild(github);
+
+    const readingProgress = document.querySelector('.reading-progress');
+    if (readingProgress && readingProgress.parentNode) {
+      readingProgress.insertAdjacentElement('afterend', topbar);
+    } else {
+      document.body.insertBefore(topbar, document.body.firstChild);
+    }
+  }
+
   function mountToggle() {
+    mountArticleTopbar();
+
     const targets = [];
     const siteTopbar = document.querySelector('.site-topbar');
+    const articleTopbar = document.querySelector('.article-site-topbar');
     const articleNav = document.querySelector('.article-page .sticky-nav .nav-inner');
     if (siteTopbar) targets.push(siteTopbar);
-    if (articleNav) targets.push(articleNav);
+    else if (articleTopbar) targets.push(articleTopbar);
+    else if (articleNav) targets.push(articleNav);
     if (!targets.length && document.body) targets.push(document.body);
 
     targets.forEach(function (target) {

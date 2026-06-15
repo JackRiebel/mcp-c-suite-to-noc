@@ -6649,3 +6649,322 @@ html[data-theme="dark"] body.ai-jobs-page.article-page .sticky-nav .nav-link:hov
 html[data-theme="dark"] body.ai-jobs-page.article-page .sticky-nav .nav-link.active {
   color: var(--theme-text-strong);
 }
+
+/* ── Final publish polish: width, article site nav, card contrast ─────── */
+body.site-home {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body.site-home .site-shell,
+body.site-home .site-section,
+body.site-home .site-footer {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: clamp(22px, 6vw, 88px);
+  padding-right: clamp(22px, 6vw, 88px);
+}
+
+body.site-home .site-hero,
+body.site-home .site-page-hero,
+body.site-home .site-home-preview,
+body.site-home .site-blog-grid,
+body.site-home .site-repo-grid,
+body.site-home .site-engage-grid,
+body.site-home .site-comment-panel,
+body.site-home .site-preview-grid,
+body.site-home .site-section-head,
+body.site-home .site-repo-toolbar {
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body.site-home .site-page-hero {
+  max-width: none;
+}
+
+body.site-home .site-page-hero > p,
+body.site-home .site-page-hero h1 {
+  max-width: 820px;
+}
+
+body.site-home .site-blog-card,
+body.site-home .site-repo-card {
+  max-width: none;
+}
+
+body.article-page .article-site-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 13px clamp(18px, 4vw, 54px);
+  color: var(--theme-text);
+  border-bottom: 1px solid var(--theme-line);
+  background: var(--theme-nav);
+  backdrop-filter: blur(18px);
+}
+
+body.site-home .site-topbar {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body.article-page .article-site-topbar .site-mark,
+body.article-page .article-site-topbar .site-nav,
+body.article-page .article-site-topbar .site-ghost-btn,
+body.article-page .article-site-topbar .theme-toggle {
+  flex: 0 0 auto;
+}
+
+body.article-page .article-site-topbar .site-mark span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: var(--theme-text-strong);
+  border: 1px solid var(--theme-line);
+  border-radius: 50%;
+  background: var(--theme-surface);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+body.article-page .article-site-topbar .site-mark strong,
+body.article-page .article-site-topbar .site-nav a,
+body.article-page .article-site-topbar .site-ghost-btn {
+  color: var(--theme-text-strong);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  text-decoration: none;
+}
+
+body.article-page .article-site-topbar .site-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.article-page .article-site-topbar .site-nav a {
+  position: relative;
+  padding: 8px 0;
+  color: var(--theme-muted);
+}
+
+body.article-page .article-site-topbar .site-nav a:hover,
+body.article-page .article-site-topbar .site-nav a.active {
+  color: var(--theme-text-strong);
+}
+
+body.article-page .article-site-topbar .site-nav a.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -14px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--theme-text-strong);
+}
+
+body.article-page .article-site-topbar .site-ghost-btn {
+  min-height: 34px;
+  padding: 0 15px;
+  border: 1px solid var(--theme-line);
+  border-radius: 999px;
+  background: var(--theme-surface);
+}
+
+body.article-page .article-site-topbar .site-ghost-btn:hover {
+  color: var(--theme-link);
+  border-color: var(--theme-link);
+}
+
+body.article-page .sticky-nav {
+  top: 58px;
+  z-index: 90;
+}
+
+body.article-page .article-site-topbar + .hero,
+body.article-page .article-site-topbar + .live26-hero {
+  margin-top: 0;
+}
+
+body.article-page .chart-card,
+body.article-page .finding-card,
+body.article-page .method-card,
+body.article-page .analogy-card,
+body.article-page .callout-banner,
+body.article-page .conclusion-box,
+body.article-page .insight-card,
+body.article-page .matrix-cell,
+body.article-page .job-row,
+body.article-page .diagram-wrapper,
+body.article-page .treemap-wrapper,
+body.article-page .job-list,
+body.article-page .agent-control-card,
+body.article-page .agent-badge-card,
+body.article-page .request-card,
+body.article-page .fabric-card,
+body.article-page .fabric-layer-card,
+body.article-page .glasswing-panel,
+body.article-page .live26-hero-panel,
+body.article-page .live26-control-room,
+body.article-page .live26-harness-card,
+body.article-page .live26-model-side,
+body.article-page .live26-model-core,
+body.article-page .live26-exec-query,
+body.article-page .live26-exec-evidence,
+body.article-page .live26-exec-answer,
+body.article-page .live26-pqc-card,
+body.article-page .live26-sources-panel,
+body.article-page .live26-scope-note > div,
+body.article-page .live26-shield-step,
+body.article-page .live26-domain-node,
+body.article-page .live26-question-pane,
+body.article-page .live26-answer-pane,
+body.article-page .live26-evidence-list li,
+body.article-page .live26-evidence-cloud span,
+body.article-page .elevator-gate,
+body.article-page .room-node,
+body.article-page .building-floor,
+body.article-page .agent-checkpoint,
+body.article-page .fabric-node,
+body.site-home .site-engage-card,
+body.site-home .site-comment-panel,
+body.site-home .site-comments,
+body.site-home .site-like-btn,
+body.site-home .site-card-actions a,
+body.site-home .site-repo-toolbar a {
+  color: var(--theme-text);
+  border-color: var(--theme-soft-line);
+  background: var(--theme-surface);
+  box-shadow: var(--theme-shadow);
+}
+
+body.article-page .diagram-wrapper,
+body.article-page .treemap-wrapper,
+body.article-page .job-list,
+body.article-page .live26-domain-node,
+body.article-page .live26-question-pane,
+body.article-page .live26-answer-pane,
+body.article-page .live26-evidence-list li,
+body.article-page .live26-evidence-cloud span,
+body.article-page .elevator-gate,
+body.article-page .room-node,
+body.article-page .building-floor,
+body.article-page .agent-checkpoint,
+body.article-page .fabric-node,
+body.site-home .site-comments {
+  background: var(--theme-surface-soft);
+}
+
+body.article-page .chart-card h3,
+body.article-page .finding-card .fc-title,
+body.article-page .method-card h3,
+body.article-page .conclusion-box h3,
+body.article-page .conclusion-box .cb-lead,
+body.article-page .conclusion-box .cb-closing,
+body.article-page .insight-card .ic-title,
+body.article-page .matrix-cell h4,
+body.article-page .job-row .job-title,
+body.article-page .fabric-card strong,
+body.article-page .fabric-layer-card strong,
+body.article-page .live26-sources-panel summary,
+body.site-home .site-engage-card h3,
+body.site-home .site-comment-panel h3 {
+  color: var(--theme-text-strong);
+}
+
+body.article-page .chart-card .chart-desc,
+body.article-page .finding-card .fc-body,
+body.article-page .method-card p,
+body.article-page .conclusion-box .cb-detail,
+body.article-page .insight-card .ic-body,
+body.article-page .matrix-cell p,
+body.article-page .matrix-cell .mc-examples,
+body.article-page .job-row .job-meta,
+body.article-page .agent-card-head p,
+body.article-page .room-node small,
+body.article-page .elevator-gate small,
+body.article-page .agent-badge-card small,
+body.article-page .fabric-layer-card p,
+body.article-page .live26-sources-note,
+body.site-home .site-engage-card p,
+body.site-home .site-comment-panel p {
+  color: var(--theme-muted);
+}
+
+body.site-home .site-like-btn.liked {
+  color: #ffffff;
+  border-color: var(--theme-text-strong);
+  background: var(--theme-text-strong);
+}
+
+html[data-theme="dark"] body.site-home .site-like-btn.liked {
+  color: #000000;
+}
+
+body.live26-page.article-page .live26-briefing-meta span:first-child {
+  color: #ffffff;
+  border-color: #1d1d1f;
+  background: #1d1d1f;
+}
+
+html[data-theme="dark"] body.live26-page.article-page .live26-briefing-meta span:first-child {
+  color: #000000;
+  border-color: #f5f5f7;
+  background: #f5f5f7;
+}
+
+@media (max-width: 760px) {
+  body.site-home .site-shell,
+  body.site-home .site-section,
+  body.site-home .site-footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  body.article-page .article-site-topbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    padding: 13px 16px;
+  }
+
+  body.article-page .article-site-topbar .site-nav {
+    order: 3;
+    width: 100%;
+    gap: 18px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  body.article-page .article-site-topbar .site-ghost-btn {
+    display: none;
+  }
+
+  body.article-page .article-site-topbar .site-nav a.active::after {
+    bottom: -5px;
+  }
+
+  body.article-page .sticky-nav {
+    top: 106px;
+  }
+}
