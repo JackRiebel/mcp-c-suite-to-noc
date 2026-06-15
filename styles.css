@@ -3552,6 +3552,66 @@ footer {
   line-height: 1.1;
 }
 
+.site-about-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.site-about-grid div {
+  padding: 15px;
+  border: 1px solid rgba(148, 210, 255, 0.13);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.035);
+}
+
+.site-about-grid span {
+  display: block;
+  margin-bottom: 8px;
+  color: #6ee7f3;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.site-about-grid strong {
+  display: block;
+  color: #eef9ff;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.site-about-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.site-about-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(34, 211, 238, 0.09), transparent 34%),
+    radial-gradient(circle at 75% 0%, rgba(126, 231, 215, 0.18), transparent 34%);
+}
+
+.site-about-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.site-about-photo {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.24);
+  border-radius: 24px;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.34);
+}
+
 .site-signal-grid {
   display: grid;
   gap: 12px;
@@ -3825,6 +3885,10 @@ footer {
   .site-blog-grid,
   .site-repo-grid,
   .site-engage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .site-about-grid {
     grid-template-columns: 1fr;
   }
 
